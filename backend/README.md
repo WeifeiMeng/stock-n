@@ -33,6 +33,30 @@ python3 main.py
 
 服务器将在 `http://localhost:8000` 启动。
 
+## MySQL 中间件配置
+
+后端已内置 MySQL Session 中间件（请求级别自动创建/提交/回滚会话）。
+
+可任选其一配置方式：
+
+1) 单变量 DSN（推荐）
+
+```bash
+MYSQL_DSN=mysql+aiomysql://user:password@127.0.0.1:3306/your_db
+```
+
+2) 分项变量
+
+```bash
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=your_db
+```
+
+未配置上述变量时，服务仍可启动，但不会启用 MySQL 连接。
+
 ## API端点
 
 ### GET /

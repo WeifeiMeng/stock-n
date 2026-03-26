@@ -1,11 +1,14 @@
 # https://www.zhituapi.com/hsstockapi.html
 import asyncio
+import logging
+import os
+import sys
 import requests
 import pandas as pd
-import sys
-import os
 from datetime import datetime, timedelta
-from typing import List
+from typing import Any, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # 处理导入路径，支持直接运行和作为模块导入
 try:
@@ -19,10 +22,28 @@ except ImportError:
 
 token = 'A7EB52CA-9651-4E41-8905-21AC0EA9F954'
 
-async def get_zt_stock_list(date: str) -> List[ZtStockInfo]:   
+
+def _parse_json(response: requests.Response, url: str) -> Optional[Any]:
+    """安全解析 JSON，失败时记录日志并返回 None"""
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logger.warning("API 请求失败 %s: %s, body: %s", url, e, response.text[:200])
+        return None
+    except requests.exceptions.JSONDecodeError as e:
+        logger.warning("JSON 解析失败 %s: %s, body: %s", url, e, response.text[:200])
+        return None
+
+
+# 获取涨停股票列表
+async def get_zt_stock_list(date: str) -> List[ZtStockInfo]:
     url = f'https://api.zhituapi.com/hs/pool/ztgc/{date}?token={token}'
     response = requests.get(url)
-    data = response.json()
+    data = _parse_json(response, url)
+    if data is None:
+        logger.warning("get_zt_stock_list API 请求失败 %s", url)
+        return []
 
     if isinstance(data, list) and len(data) > 0:
         df = pd.DataFrame(data)
@@ -46,13 +67,28 @@ async def get_zt_stock_list(date: str) -> List[ZtStockInfo]:
             )
             stock_info_list.append(stock_info)
         return stock_info_list
+    logger.warning("get_zt_stock_list JSON 解析失败 %s", url)
+    return []
+
+
+# 获取股票日线数据
+# @start_date: 开始日期
+# @end_date: 结束日期
+# @code: 股票代码
+# @name: 股票名称
+# @return: 股票日线数据列表
+# API 请求间隔（秒），避免限流
+REQUEST_INTERVAL = 0.5
 
 
 async def get_day_detail(start_date: str, end_date: str, code: str, name: str) -> List[DayStockInfo]:
+    await asyncio.sleep(REQUEST_INTERVAL)  # 请求间隔，避免 API 限流
     market = get_market(code)
     url = f"https://api.zhituapi.com/hs/history/{code}.{market}/d/n?token={token}&st={start_date}&et={end_date}&limit=30"
     response = requests.get(url)
-    data = response.json()
+    data = _parse_json(response, url)
+    if data is None:
+        return []
     
     # 将数据转换为pandas DataFrame
     if isinstance(data, list) and len(data) > 0:
@@ -82,11 +118,11 @@ async def get_day_detail(start_date: str, end_date: str, code: str, name: str) -
         return []  # 返回空列表
 
 if __name__ == '__main__':
-    date = '2026-01-20'
+    date = '2026-03-19'
     # 将字符串转换为datetime对象
     date_obj = datetime.strptime(date, '%Y-%m-%d')
     # 计算32天前的日期
-    start_date = date_obj - timedelta(days=100)
+    start_date = date_obj - timedelta(days=32)
     # 将结果转换回字符串格式（YYYY-MM-DD）
     start_date_str = start_date.strftime('%Y-%m-%d')
     # 转换为YYYYMMDD格式

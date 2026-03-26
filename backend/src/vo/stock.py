@@ -29,3 +29,18 @@ class ZtStockInfo:
     zbc: int # 炸板次数
     lbc: int # 连板次数
     tj: str #涨停统计
+
+@dataclass
+class StockNInfo:
+    code: str
+    name: str
+    market: str
+    industry: str
+    start_pri: float
+    end_pri: float
+    highest_pri: float
+    lowest_pri: float
+    date: str
+    zt: bool
+    dt: bool
+    n: int

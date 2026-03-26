@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import root, calculate_prices, health_check
 from .models import ZtStockInfoResponse
+from src.middleware import MySQLSessionMiddleware, close_mysql_engine
+from src.dao import init_all_tables
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -21,8 +23,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(MySQLSessionMiddleware)
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    await init_all_tables()
+
 
 # 注册路由
 app.get("/")(root)
 app.post("/calculate", response_model=list[ZtStockInfoResponse])(calculate_prices)
 app.get("/health")(health_check)
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await close_mysql_engine()
