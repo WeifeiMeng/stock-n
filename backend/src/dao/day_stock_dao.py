@@ -117,3 +117,15 @@ class DayStockDAO:
         )
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+    @staticmethod
+    async def get_by_code_and_date(
+        session: AsyncSession, code: str, trade_date: str
+    ) -> DayStockEntity | None:
+        """根据股票代码和交易日期查询单条记录"""
+        stmt = select(DayStockEntity).where(
+            DayStockEntity.code == code,
+            DayStockEntity.trade_date == trade_date,
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -11,6 +11,7 @@ if __name__ == '__main__':
 
 from datetime import datetime, timedelta, timezone
 import logging
+import chinese_calendar
 from typing import List
 from src.stock_service.ztapi import get_day_detail, get_zt_stock_list
 from src.stock_service.tools import get_market
@@ -32,10 +33,11 @@ def _get_prev_days(date: str, i: int) -> str:
     return prev_day.strftime('%Y-%m-%d')
 
 def _get_prev_workday(date: str) -> str:
-    """获取 date 的前一个工作日（北京时间）"""
+    """获取 date 的前一个工作日（北京时间，跳过节假日）"""
     date_obj = datetime.strptime(date, '%Y-%m-%d').replace(tzinfo=timezone(timedelta(hours=8)))
-    weekday = date_obj.weekday()
-    prev_day = date_obj - timedelta(days=3) if weekday == 0 else date_obj - timedelta(days=1)
+    prev_day = date_obj - timedelta(days=1)
+    while not chinese_calendar.is_workday(prev_day.date()):
+        prev_day = prev_day - timedelta(days=1)
     return prev_day.strftime('%Y-%m-%d')
 
 
@@ -49,7 +51,7 @@ async def rule_for_today(stock_list: List[ZtStockInfo], previous_day: str, date:
     previous_day_yyyymmdd = previous_day.replace('-', '')
     date_yyyymmdd = date.replace('-', '')
     logger.info(f"stock_list candidates: length {len(stock_list)}, detail: {stock_list}")
-    for stock in stock_list[:5]:
+    for stock in stock_list:
         stock_day_info = await get_day_detail(previous_day_yyyymmdd, date_yyyymmdd, stock.code, stock.name)
         print(f"stock_day_info: {stock_day_info}")
         if len(stock_day_info) < 2:
@@ -183,20 +185,89 @@ async def single_stock_filter(stock: ZtStockInfo, date: str) -> bool:
     return len(filtered) > 0
 
 
+# 过滤规则：获取前一交易日涨停，今日未涨停未跌停，非 ST/*ST/北交所的股票
+async def filter_zt_stocks(date: str) -> List[ZtStockInfo]:
+    """
+    过滤出符合以下条件的股票：
+    1. 给定日期前一个交易日涨停
+    2. 给定日期未涨停、未跌停
+    3. 排除 ST、*ST、北交所股票
+
+    @param date: 交易日期 (YYYY-MM-DD)
+    @return: 符合条件的股票列表
+    """
+    prev_workday = _get_prev_workday(date)
+
+    # 1. 获取前一交易日涨停的股票（从 API 获取）
+    zt_list = await get_zt_stock_list(prev_workday)
+    logger.info(f"filter_zt_stocks: 获取 {prev_workday} 涨停股票 %d 只", len(zt_list))
+
+    # 2. 过滤 ST、*ST、北交所股票
+    zt_list = rule_filter_st_bj(zt_list)
+    logger.info(f"filter_zt_stocks: 过滤 ST/*ST/北交所后剩余 %d 只", len(zt_list))
+
+    # 3. 过滤今日未涨停未跌停的股票
+    zt_list = await rule_for_today(zt_list, prev_workday, date)
+    logger.info(f"filter_zt_stocks: 过滤今日涨停/跌停后剩余 %d 只", len(zt_list))
+
+    return zt_list
+
+
 async def n_calculate_rule(date: str) -> List[ZtStockInfo]:
-    #1. 获取昨日涨停的股票
-    one_day_befor = _get_prev_workday(date)
-    zt_list_one_day_befor = await ZtStockDAO.list_by_trade_date(one_day_befor)
+    """
+    按日期执行完整的 N 规则筛选流程。
 
+    规则链：
+    1. 获取前一交易日涨停的股票
+    2. 过滤 ST、*ST、北交所股票
+    3. 过滤今日未涨停未跌停的股票
+    4. 过滤涨停前 7 个交易日内有跌停或连续涨停的股票
+    5. 过滤涨停前 30 个交易日内没有涨停过的股票
+    """
+    one_day_before = _get_prev_workday(date)
 
-    #3. 过滤出今日未涨停未跌停的股票
-    zt_list_today = await rule_for_today(zt_list_today, one_day_befor, date)
-    print(f"zt_list_today: {zt_list_today}")
+    # 1. 获取前一交易日涨停的股票
+    zt_entities = await ZtStockDAO.list_by_trade_date(one_day_before)
+    # DAO 返回 ZtStockEntity，转换为 ZtStockInfo 供规则函数使用
+    zt_list = [
+        ZtStockInfo(
+            code=e.code,
+            name=e.name,
+            pri=e.pri,
+            zf=e.zf,
+            cje=e.cje,
+            lt=e.lt,
+            zsz=e.zsz,
+            hs=e.hs,
+            fbt=e.fbt,
+            lbt=e.lbt,
+            zj=e.zj,
+            zbc=e.zbc,
+            lbc=e.lbc,
+            tj=e.tj,
+        )
+        for e in zt_entities
+    ]
+    logger.info(f"N 规则筛选：获取昨日涨停股票 %d 只", len(zt_list))
 
-    return zt_list_today
+    # 2. 过滤 ST、*ST、北交所股票
+    zt_list = rule_filter_st_bj(zt_list)
+    logger.info(f"N 规则筛选：过滤 ST/*ST/北交所后剩余 %d 只", len(zt_list))
+
+    # 3. 过滤今日未涨停未跌停的股票
+    zt_list = await rule_for_today(zt_list, one_day_before, date)
+    logger.info(f"N 规则筛选：过滤今日涨停/跌停后剩余 %d 只", len(zt_list))
+
+    # 4. 过滤涨停前 7 个交易日有跌停或连续涨停的股票
+    zt_list = await rule_no_zt_no_dt(zt_list, date)
+    logger.info(f"N 规则筛选：过滤近 7 日有跌停/连续涨停后剩余 %d 只", len(zt_list))
+
+    # 5. 过滤涨停前 30 个交易日内没有涨停过的股票
+    zt_list = await rule_zt_30_days(zt_list, date)
+    logger.info(f"N 规则筛选：过滤近 30 日无涨停后剩余 %d 只", len(zt_list))
+
+    return zt_list
 
 
 if __name__ == '__main__':
-    date = '2026-03-19'
-    zt_list = asyncio.run(n_calculate_rule(date))
-    print(zt_list)
+    asyncio.run(n_calculate_rule('2026-03-19'))
