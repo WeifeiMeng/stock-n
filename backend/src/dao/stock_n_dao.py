@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from sqlalchemy import Boolean, Index, Integer, String, select
+from sqlalchemy import Boolean, Float, Index, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -37,6 +37,7 @@ class StockNEntity(Base):
     zt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     dt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     n: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    base_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
 
 class StockNDAO:
@@ -60,6 +61,7 @@ class StockNDAO:
             zt=stock.zt,
             dt=stock.dt,
             n=stock.n,
+            base_price=stock.base_price,
         )
         session.add(entity)
         await session.flush()
@@ -81,6 +83,7 @@ class StockNDAO:
                 zt=s.zt,
                 dt=s.dt,
                 n=s.n,
+                base_price=s.base_price,
             )
             for s in stocks
         ]

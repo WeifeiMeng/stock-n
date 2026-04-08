@@ -44,3 +44,4 @@ class StockNInfo:
     zt: bool
     dt: bool
     n: int
+    base_price: float

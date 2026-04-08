@@ -1,11 +1,12 @@
 """
 N 规则完整筛选流程：
 1. 获取前一交易日涨停股票，过滤 ST/*ST/北交所，存入 zt_stock 表
-2. 从 zt_stock 读取数据，过滤目标日未涨停/跌停的股票
-3. 应用规则过滤：
+2. 批量获取所有涨停股票的日线数据（45天），存入 day_stock 表
+3. 从 zt_stock 读取数据，过滤目标日未涨停/跌停的股票（优先从 day_stock 读取）
+4. 应用规则过滤：
    - 规则4：涨停前 7 个交易日无跌停、无连续涨停
    - 规则5：涨停前 30 个交易日内有涨停记录
-4. 补全日线详情，存入 stock_n 表
+5. 补全日线详情，存入 stock_n 表
 
 用法:
     python scripts/filter_stock_n.py --date 2026-03-24
@@ -65,6 +66,24 @@ def _resolve_date(date_text: str | None) -> str:
 
 
 # ----------------------------------------------------------------------
+# 工具函数：获取前 n 个工作日
+# ----------------------------------------------------------------------
+async def _get_n_prev_workday(date: str, n: int) -> str:
+    """获取 date 的前 n 个工作日"""
+    import chinese_calendar
+    date_obj = datetime.strptime(date, '%Y-%m-%d').replace(tzinfo=None)
+    prev_day = date_obj - timedelta(days=1)
+    count = 0
+    while count < n:
+        if chinese_calendar.is_workday(prev_day.date()):
+            count += 1
+            if count == n:
+                break
+        prev_day = prev_day - timedelta(days=1)
+    return prev_day.strftime('%Y-%m-%d')
+
+
+# ----------------------------------------------------------------------
 # 步骤 1：从 API 拉取前一交易日涨停数据，过滤后写入 zt_stock 表
 # ----------------------------------------------------------------------
 async def fetch_and_save_zt_stocks(prev_workday: str) -> list[ZtStockInfo]:
@@ -94,21 +113,116 @@ async def fetch_and_save_zt_stocks(prev_workday: str) -> list[ZtStockInfo]:
 
 
 # ----------------------------------------------------------------------
-# 步骤 2：从 zt_stock 表读取，过滤目标日未涨停/跌停的股票
+# 步骤 2：批量获取日线数据并写入 day_stock 表
+# ----------------------------------------------------------------------
+async def batch_fetch_and_save_day_stocks(zt_list: list[ZtStockInfo], zt_date: str) -> None:
+    """
+    批量获取所有股票的日线数据（从zt_date往前45个日历天），存入 day_stock 表。
+    先查数据库已存在的记录，避免重复写入。
+    """
+    zt_date_yyyymmdd = zt_date.replace('-', '')
+    start_date_obj = datetime.strptime(zt_date, '%Y-%m-%d') - timedelta(days=45)
+    start_yyyymmdd = start_date_obj.strftime('%Y%m%d')
+
+    codes = [s.code for s in zt_list]
+    session_factory = get_session_factory()
+
+    # 先查询数据库已存在的记录
+    async with session_factory() as session:
+        existing = await DayStockDAO.list_by_codes_and_date_range(
+            session, codes, start_yyyymmdd, zt_date_yyyymmdd
+        )
+        existing_set = {(d.code, d.trade_date) for d in existing}
+        logger.info("day_stock 表已存在 %d 条记录", len(existing_set))
+
+    # 需要从 API 获取的股票列表
+    to_fetch = [s for s in zt_list if not any(s.code == c for c, _ in existing_set)]
+
+    if not to_fetch:
+        logger.info("所有股票的日线数据已存在于 day_stock 表")
+        return
+
+    logger.info("需要从 API 获取 %d 只股票的日线数据", len(to_fetch))
+
+    # 批量从 API 获取并写入
+    for stock in to_fetch:
+        day_list = await get_day_detail(start_yyyymmdd, zt_date_yyyymmdd, stock.code, stock.name)
+        if not day_list:
+            continue
+
+        # 只写入数据库中没有的记录
+        to_insert = [d for d in day_list if (d.code, d.date) not in existing_set]
+        if to_insert:
+            async with session_factory() as session:
+                await DayStockDAO.insert_many(session, to_insert)
+                await session.commit()
+
+    logger.info("日线数据批量写入 day_stock 表完成")
+
+
+# ----------------------------------------------------------------------
+# 工具函数：优先从 day_stock 读取日线数据，没有则调 API
+# ----------------------------------------------------------------------
+async def get_day_data_cached(
+    code: str, name: str, start_yyyymmdd: str, end_yyyymmdd: str
+) -> list[DayStockInfo]:
+    """
+    获取股票日线数据，优先从 day_stock 表读取，数据库没有则调 API 并保存。
+    """
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        db_days = await DayStockDAO.list_by_codes_and_date_range(
+            session, [code], start_yyyymmdd, end_yyyymmdd
+        )
+
+    # 转换为 DayStockInfo
+    day_stock_infos = [
+        DayStockInfo(
+            code=d.code,
+            name=d.name or name,
+            market=d.market or "",
+            industry=d.industry or "",
+            start_pri=d.start_pri,
+            end_pri=d.end_pri,
+            highest_pri=d.highest_pri,
+            lowest_pri=d.lowest_pri,
+            date=d.trade_date,
+        )
+        for d in db_days
+    ]
+
+    # 如果数据库有足够数据，直接返回
+    if len(day_stock_infos) >= 2:
+        return day_stock_infos
+
+    # 数据库没有，调 API
+    api_days = await get_day_detail(start_yyyymmdd, end_yyyymmdd, code, name)
+    if not api_days:
+        return day_stock_infos
+
+    # 保存到数据库
+    async with session_factory() as session:
+        await DayStockDAO.insert_many(session, api_days)
+        await session.commit()
+
+    return api_days
+
+
+# ----------------------------------------------------------------------
+# 步骤 3：从 zt_stock 表读取，过滤目标日未涨停/跌停的股票
 # ----------------------------------------------------------------------
 async def filter_by_target_day(
     prev_workday: str, target_date: str, zt_list: list[ZtStockInfo]
 ) -> list[ZtStockInfo]:
     """
     读取 zt_list 中股票在 target_date 的行情，过滤出目标日未涨停且未跌停的股票。
-    同时将目标日行情数据一并返回。
     """
     prev_yyyymmdd = prev_workday.replace('-', '')
     target_yyyymmdd = target_date.replace('-', '')
     result: list[ZtStockInfo] = []
 
     for stock in zt_list:
-        day_list = await get_day_detail(prev_yyyymmdd, target_yyyymmdd, stock.code, stock.name)
+        day_list = await get_day_data_cached(stock.code, stock.name, prev_yyyymmdd, target_yyyymmdd)
         if len(day_list) < 2:
             continue
         lastday_info, today_info = day_list[0], day_list[1]
@@ -124,24 +238,32 @@ async def filter_by_target_day(
 
 
 # ----------------------------------------------------------------------
-# 步骤 3：应用规则4、规则5 过滤
+# 步骤 4：应用规则4、规则5 过滤
 # ----------------------------------------------------------------------
 async def rule_no_zt_no_dt(zt_list: list[ZtStockInfo], zt_date: str) -> list[ZtStockInfo]:
     """规则4：过滤涨停前 7 个交易日有跌停或连续涨停的股票"""
     zt_date_yyyymmdd = zt_date.replace('-', '')
-    start_date_obj = datetime.strptime(zt_date, '%Y-%m-%d') - timedelta(days=10)
+    # 往前取14个日历天，确保能覆盖7个以上的交易日后
+    start_date_obj = datetime.strptime(zt_date, '%Y-%m-%d') - timedelta(days=14)
     start_date_yyyymmdd = start_date_obj.strftime('%Y%m%d')
 
     result: list[ZtStockInfo] = []
     for stock in zt_list:
-        day_list = await get_day_detail(start_date_yyyymmdd, zt_date_yyyymmdd, stock.code, stock.name)
-        if len(day_list) < 9:
+        day_list = await get_day_data_cached(stock.code, stock.name, start_date_yyyymmdd, zt_date_yyyymmdd)
+        if len(day_list) < 8:
             continue
+
+        # day_list 是按时间排序的（ oldest -> newest）
+        # 取最后8个元素，其中 day_list[-1] 是涨停日，前7个是涨停前的7个交易日
+        check_days = day_list[-8:-1]  # 涨停日之前的7个交易日
+        if len(check_days) != 7:
+            continue
+
         has_dt = False
         consecutive_zt = 0
-        for i in range(8):
-            prev_pri = day_list[-9 + i].end_pri
-            curr_pri = day_list[-8 + i].end_pri
+        for i in range(7):
+            prev_pri = check_days[i - 1].end_pri if i > 0 else 0
+            curr_pri = check_days[i].end_pri
             if prev_pri <= 0:
                 continue
             if _is_dt(prev_pri, curr_pri):
@@ -161,20 +283,26 @@ async def rule_no_zt_no_dt(zt_list: list[ZtStockInfo], zt_date: str) -> list[ZtS
 async def rule_zt_30_days(zt_list: list[ZtStockInfo], zt_date: str) -> list[ZtStockInfo]:
     """规则5：过滤涨停前 30 个交易日内没有涨停过的股票"""
     zt_date_yyyymmdd = zt_date.replace('-', '')
-    start_date_obj = datetime.strptime(zt_date, '%Y-%m-%d') - timedelta(days=60)
-    start_date_yyyymmdd = start_date_obj.strftime('%Y%m%d')
+    # 往前取45个日历天，确保能覆盖30个以上的交易日
+    start_date_obj = datetime.strptime(zt_date, '%Y-%m-%d') - timedelta(days=45)
+    start_yyyymmdd = start_date_obj.strftime('%Y%m%d')
 
     result: list[ZtStockInfo] = []
     for stock in zt_list:
-        day_list = await get_day_detail(start_date_yyyymmdd, zt_date_yyyymmdd, stock.code, stock.name)
+        day_list = await get_day_data_cached(stock.code, stock.name, start_yyyymmdd, zt_date_yyyymmdd)
         if len(day_list) < 2:
             continue
-        # 包含 zt_date：day_list[-30:] 取最近 30 天（T-29 到 T）
-        pre_days = day_list[-30:] if len(day_list) >= 30 else day_list[:]
+
+        # 取最后30个交易日（不包含涨停日本身），检查这30天内是否有涨停
+        # day_list[-1] 是涨停日，day_list[:-1] 是涨停前的所有数据
+        # 取最近30个交易日
+        pre_days = day_list[-31:-1] if len(day_list) >= 31 else day_list[:-1]
         if len(pre_days) < 2:
             continue
+
         has_zt = False
-        for i in range(1, min(len(pre_days), 30)):
+        # 检查所有相邻的交易日对
+        for i in range(1, len(pre_days)):
             if _is_zt(pre_days[i - 1].end_pri, pre_days[i].end_pri):
                 has_zt = True
                 break
@@ -184,23 +312,36 @@ async def rule_zt_30_days(zt_list: list[ZtStockInfo], zt_date: str) -> list[ZtSt
 
 
 # ----------------------------------------------------------------------
-# 步骤 4：构建 StockNInfo 并存入 stock_n 表
+# 步骤 5：构建 StockNInfo 并存入 stock_n 表
 # ----------------------------------------------------------------------
 async def save_stock_n(
     stocks: list[ZtStockInfo], target_date: str, prev_workday: str
 ) -> int:
     """获取日线详情，构造 StockNInfo，写入 stock_n 表"""
+    # 获取 target_date 前第二个交易日作为 base_price 参考日
+    base_date = await _get_n_prev_workday(target_date, 2)
+    base_yyyymmdd = base_date.replace('-', '')
     prev_yyyymmdd = prev_workday.replace('-', '')
     target_yyyymmdd = target_date.replace('-', '')
 
     stock_n_list: list[StockNInfo] = []
     for stock in stocks:
-        day_list = await get_day_detail(prev_yyyymmdd, target_yyyymmdd, stock.code, stock.name)
+        day_list = await get_day_data_cached(stock.code, stock.name, base_yyyymmdd, target_yyyymmdd)
         if len(day_list) < 2:
             continue
 
+        # 找到 base_date、target_date 对应的日线数据
+        base_info = None
+        target_info = None
+        for day in day_list:
+            if day.date == base_date:
+                base_info = day
+            if day.date == target_date:
+                target_info = day
+        if base_info is None or target_info is None:
+            continue
+
         zt_day_info = day_list[-1]   # 涨停日
-        target_info = day_list[-2]   # 目标日
 
         market = get_market(stock.code) or ""
 
@@ -217,6 +358,7 @@ async def save_stock_n(
             zt=_is_zt(zt_day_info.end_pri, target_info.end_pri),
             dt=_is_dt(zt_day_info.end_pri, target_info.end_pri),
             n=stock.lbc,
+            base_price=base_info.end_pri,
         ))
 
     if not stock_n_list:
@@ -226,52 +368,6 @@ async def save_stock_n(
     async with session_factory() as session:
         inserted = await StockNDAO.insert_many(session, stock_n_list)
         await session.commit()
-    return inserted
-
-
-# ----------------------------------------------------------------------
-# 步骤 5：保存 target_date 前两个交易日的日线数据到 day_stock 表
-# ----------------------------------------------------------------------
-async def _get_n_prev_workday(date: str, n: int) -> str:
-    """获取 date 的前 n 个工作日"""
-    import chinese_calendar
-    date_obj = datetime.strptime(date, '%Y-%m-%d').replace(tzinfo=None)
-    prev_day = date_obj - timedelta(days=1)
-    count = 0
-    while count < n:
-        if chinese_calendar.is_workday(prev_day.date()):
-            count += 1
-            if count == n:
-                break
-        prev_day = prev_day - timedelta(days=1)
-    return prev_day.strftime('%Y-%m-%d')
-
-
-async def save_day_stocks(stocks: list[ZtStockInfo], target_date: str) -> int:
-    """保存 target_date 前两个交易日的日线数据到 day_stock 表"""
-    ref_date = await _get_n_prev_workday(target_date, 2)
-    ref_yyyymmdd = ref_date.replace('-', '')
-    # 取 ref_date 前后各几天，确保能拿到 ref_date 的数据
-    start_obj = datetime.strptime(ref_date, '%Y-%m-%d') - timedelta(days=5)
-    start_yyyymmdd = start_obj.strftime('%Y%m%d')
-
-    day_stock_list: list[DayStockInfo] = []
-    for stock in stocks:
-        day_list = await get_day_detail(start_yyyymmdd, ref_yyyymmdd, stock.code, stock.name)
-        # 从 day_list 中找到 ref_date 当天的数据
-        for day in day_list:
-            if day.date == ref_date:
-                day_stock_list.append(day)
-                break
-
-    if not day_stock_list:
-        return 0
-
-    session_factory = get_session_factory()
-    async with session_factory() as session:
-        inserted = await DayStockDAO.insert_many(session, day_stock_list)
-        await session.commit()
-    logger.info("写入 day_stock 表 %d 条 (%s 数据)", inserted, ref_date)
     return inserted
 
 
@@ -298,6 +394,9 @@ async def _run(target_date: str) -> None:
             print(f"[INFO] {prev_workday} 无涨停数据，跳过。")
             return
 
+        # Step 2.5: 批量获取所有股票的日线数据并存入 day_stock 表
+        await batch_fetch_and_save_day_stocks(zt_list, prev_workday)
+
         # Step 3: 过滤目标日未涨停/跌停
         zt_list = await filter_by_target_day(prev_workday, target_date, zt_list)
         logger.info(f"步骤3 - 过滤目标日涨停/跌停后剩余 %d 只", len(zt_list))
@@ -319,9 +418,6 @@ async def _run(target_date: str) -> None:
         # Step 6: 写入 stock_n 表
         inserted = await save_stock_n(zt_list, target_date, prev_workday)
         print(f"[INFO] {target_date} 入库完成：zt_stock {len(zt_list)} 条，stock_n {inserted} 条。")
-
-        # Step 7: 写入 day_stock 表（target_date 前两个交易日）
-        await save_day_stocks(zt_list, target_date)
 
     finally:
         await close_mysql_engine()

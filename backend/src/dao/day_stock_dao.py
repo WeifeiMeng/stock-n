@@ -129,3 +129,16 @@ class DayStockDAO:
         )
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def list_by_codes_and_date_range(
+        session: AsyncSession, codes: list[str], start_date: str, end_date: str
+    ) -> List[DayStockEntity]:
+        """根据股票代码列表和日期范围查询多条记录"""
+        stmt = select(DayStockEntity).where(
+            DayStockEntity.code.in_(codes),
+            DayStockEntity.trade_date >= start_date,
+            DayStockEntity.trade_date <= end_date,
+        ).order_by(DayStockEntity.trade_date)
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
