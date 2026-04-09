@@ -4,7 +4,8 @@
       "Bash(xxd)",
       "Bash(D:/code/stock-n*)",
       "Bash(powershell -Command \"& 'd:/code/stock-n/backend/.venv/Scripts/Activate.ps1'\")",
-      "Bash(. d:/code/stock-n/backend/.venv/Scripts/activate)"
+      "Bash(. d:/code/stock-n/backend/.venv/Scripts/activate)",
+      "Bash(python -m py_compile d:/code/stock-n/backend/scripts/filter_stock_n.py)"
     ]
   }
 }

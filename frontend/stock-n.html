@@ -1,10 +1,56 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N 规则股票池</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        :root {
+            /* Light theme (default) */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #fff;
+            --bg-tertiary: rgba(0, 0, 0, 0.02);
+            --bg-hover: rgba(233, 69, 96, 0.06);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --border-input: rgba(233, 69, 96, 0.4);
+            --text-primary: #333;
+            --text-secondary: #1a1a2e;
+            --text-muted: #666;
+            --text-dim: #999;
+            --accent: #e94560;
+            --accent-light: #ff4757;
+            --price-buy: #f39c12;
+            --price-profit: #e74c3c;
+            --price-loss: #27ae60;
+            --code-color: #666;
+            --group-1-bg: rgba(255, 217, 61, 0.15);
+            --group-2-bg: rgba(52, 152, 219, 0.15);
+            --group-3-bg: rgba(155, 89, 182, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: rgba(255, 255, 255, 0.03);
+            --bg-tertiary: rgba(255, 255, 255, 0.02);
+            --bg-hover: rgba(233, 69, 96, 0.06);
+            --border-color: rgba(255, 255, 255, 0.06);
+            --border-input: rgba(233, 69, 96, 0.3);
+            --text-primary: #e0e0e0;
+            --text-secondary: #fff;
+            --text-muted: #888;
+            --text-dim: #666;
+            --accent: #e94560;
+            --accent-light: #ff6b6b;
+            --price-buy: #ffd93d;
+            --price-profit: #ff6b6b;
+            --price-loss: #6bcb77;
+            --code-color: #888;
+            --group-1-bg: rgba(255, 217, 61, 0.2);
+            --group-2-bg: rgba(52, 152, 219, 0.2);
+            --group-3-bg: rgba(155, 89, 182, 0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,73 +58,336 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1300px;
             margin: 0 auto;
+            padding: 40px 20px;
         }
 
-        h1 {
-            color: #e94560;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
-
-        .control-row {
+        /* Header */
+        .header {
             display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
             align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
         }
 
-        input[type="date"] {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e94560;
-            border-radius: 10px;
-            font-size: 1em;
-            background: #1a1a2e;
-            color: #fff;
-        }
-
-        input[type="date"]:focus {
-            outline: none;
-            border-color: #0f3460;
-        }
-
-        button {
-            padding: 12px 30px;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1em;
+        .header-left h1 {
+            font-size: 2.2em;
             font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header-left .subtitle {
+            color: var(--text-dim);
+            font-size: 0.9em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle label {
+            color: var(--text-muted);
+            font-size: 0.9em;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        .switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
         }
 
-        button:disabled {
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+
+        .slider::before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--accent);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .switch input:checked + .slider::before {
+            transform: translateX(24px);
+        }
+
+        /* Export Button */
+        .export-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-1px);
+        }
+
+        .export-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
+        .export-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Date Selector */
+        .date-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .date-selector label {
+            color: var(--text-muted);
+            font-size: 0.95em;
+        }
+
+        .date-selector input[type="date"] {
+            padding: 10px 16px;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            font-size: 1em;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .date-selector input[type="date"]:hover {
+            border-color: var(--accent);
+        }
+
+        .date-selector input[type="date"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-header);
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: center;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.88em;
+            letter-spacing: 0.3px;
+        }
+
+        th.stock-info {
+            background: var(--bg-header);
+        }
+
+        /* Group backgrounds in header */
+        th.group-1 {
+            background: var(--group-1-bg);
+            color: #8b6914;
+        }
+
+        th.group-2 {
+            background: var(--group-2-bg);
+            color: #2471a3;
+        }
+
+        th.group-3 {
+            background: var(--group-3-bg);
+            color: #7d3c98;
+        }
+
+        [data-theme="dark"] th.group-1 { color: #f9e79f; }
+        [data-theme="dark"] th.group-2 { color: #85c1e9; }
+        [data-theme="dark"] th.group-3 { color: #d7bde2; }
+
+        td {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95em;
+            text-align: center;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        td.stock-info {
+            text-align: left;
+            background: var(--bg-header);
+        }
+
+        .stock-code {
+            color: var(--code-color);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .stock-name {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .price-cell {
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: var(--text-muted);
+        }
+
+        /* Group 1 - Yellow */
+        td.group-1-buy, td.group-1-profit, td.group-1-loss {
+            background: var(--group-1-bg);
+        }
+
+        /* Group 2 - Blue */
+        td.group-2-buy, td.group-2-profit, td.group-2-loss {
+            background: var(--group-2-bg);
+        }
+
+        /* Group 3 - Purple */
+        td.group-3-buy, td.group-3-profit, td.group-3-loss {
+            background: var(--group-3-bg);
+        }
+
+        .buy-price {
+            color: var(--price-buy);
+            font-weight: 700;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .take-profit {
+            color: var(--price-profit);
+            font-weight: 700;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .stop-loss {
+            color: var(--price-loss);
+            font-weight: 700;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        /* Warning highlight - take profit > current price (applied to first 4 columns) */
+        .warn-row td.stock-info {
+            background: rgba(180, 50, 50, 0.2) !important;
+        }
+
+        [data-theme="dark"] .warn-row td.stock-info {
+            background: rgba(180, 50, 50, 0.3) !important;
+        }
+
+        /* Status Messages */
         .loading, .error-message, .empty-message {
             text-align: center;
-            padding: 30px;
-            color: #aaa;
+            padding: 60px 20px;
             display: none;
         }
 
@@ -86,119 +395,304 @@
             display: block;
         }
 
+        .loading {
+            color: var(--text-dim);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(233, 69, 96, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .error-message {
-            background: rgba(233, 69, 96, 0.1);
-            color: #e94560;
-            border-radius: 10px;
+            background: var(--bg-header);
+            color: var(--accent);
+            border-radius: 12px;
             margin-bottom: 20px;
+            border: 1px solid var(--accent);
         }
 
         .empty-message {
-            color: #888;
+            color: var(--text-dim);
             font-size: 1.1em;
         }
 
-        table {
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-dim);
+            font-size: 0.85em;
+        }
+
+        /* PDF Export Styles */
+        .pdf-export-container {
+            background: #fff;
+            padding: 20px;
+        }
+
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .pdf-header h1 {
+            color: #1a1a2e;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .pdf-header p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .pdf-table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
+            font-size: 0.85em;
         }
 
-        thead {
-            background: rgba(233, 69, 96, 0.2);
+        .pdf-table th {
+            background: #f0f0f0;
+            color: #333;
+            font-weight: 600;
+            padding: 8px 6px;
+            border: 1px solid #ddd;
+            text-align: center;
         }
 
-        th {
-            padding: 15px;
+        .pdf-table th.group-1 {
+            background: rgba(255, 217, 61, 0.3);
+            color: #8b6914;
+        }
+
+        .pdf-table th.group-2 {
+            background: rgba(52, 152, 219, 0.3);
+            color: #2471a3;
+        }
+
+        .pdf-table th.group-3 {
+            background: rgba(155, 89, 182, 0.3);
+            color: #7d3c98;
+        }
+
+        .pdf-table td {
+            padding: 8px 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+            color: #333;
+        }
+
+        .pdf-table td.stock-info {
+            background: #fafafa;
             text-align: left;
-            color: #e94560;
-            font-weight: 600;
-            font-size: 0.95em;
         }
 
-        td {
-            padding: 15px;
-            color: #e0e0e0;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        .pdf-table .price-cell {
+            color: #666;
         }
 
-        tbody tr:hover {
-            background: rgba(233, 69, 96, 0.1);
+        .pdf-table .buy-price { color: #c77d00; font-weight: 600; }
+        .pdf-table .take-profit { color: #c0392b; font-weight: 600; }
+        .pdf-table .stop-loss { color: #1e8449; font-weight: 600; }
+
+        .pdf-table td.group-1-buy, .pdf-table td.group-1-profit, .pdf-table td.group-1-loss {
+            background: rgba(255, 217, 61, 0.15);
         }
 
-        .stock-name {
-            font-weight: 600;
-            color: #fff;
+        .pdf-table td.group-2-buy, .pdf-table td.group-2-profit, .pdf-table td.group-2-loss {
+            background: rgba(52, 152, 219, 0.15);
         }
 
-        .price-cell {
-            font-weight: 500;
+        .pdf-table td.group-3-buy, .pdf-table td.group-3-profit, .pdf-table td.group-3-loss {
+            background: rgba(155, 89, 182, 0.15);
         }
 
-        .buy-price {
-            color: #f39c12;
-            font-weight: 600;
+        /* PDF warning - applied to first 4 columns */
+        .pdf-table tr.warn-row td.stock-info {
+            background: rgba(180, 50, 50, 0.25) !important;
         }
 
-        .take-profit {
-            color: #27ae60;
-            font-weight: 600;
+        .pdf-footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            color: #999;
+            font-size: 0.8em;
         }
 
-        .stop-loss {
-            color: #e74c3c;
-            font-weight: 600;
-        }
-
-        @media (max-width: 600px) {
-            .control-row {
-                flex-direction: column;
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .table-wrapper {
+                overflow-x: auto;
             }
+
             th, td {
                 padding: 10px 8px;
-                font-size: 0.9em;
+                font-size: 0.85em;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .header-right {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 1.6em;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .date-selector {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>N 规则股票池</h1>
+        <div class="header">
+            <div class="header-left">
+                <h1>N 规则股票池</h1>
+                <p class="subtitle">智能计算买入价、止盈价、止损价</p>
+            </div>
+            <div class="header-right">
+                <button class="export-btn" id="exportBtn" onclick="exportToPdf()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    导出 PDF
+                </button>
+                <div class="theme-toggle">
+                    <label>深色</label>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <label>浅色</label>
+                </div>
+            </div>
+        </div>
 
-        <div class="control-row">
+        <div class="date-selector">
+            <label>选择日期</label>
             <input type="date" id="dateInput">
-            <button id="queryBtn" onclick="queryStockN()">查询</button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="stockCount">-</div>
+                <div class="stat-label">股票数量</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalAmount">-</div>
+                <div class="stat-label">参考日期</div>
+            </div>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
-        <div class="loading" id="loading">正在加载...</div>
+        <div class="loading" id="loading">正在加载数据</div>
         <div class="empty-message" id="emptyMessage">暂无数据</div>
 
-        <table id="stockTable">
-            <thead>
-                <tr>
-                    <th>股票名称</th>
-                    <th>当前价格</th>
-                    <th>买入价格</th>
-                    <th>止盈价格</th>
-                    <th>止损价格</th>
-                </tr>
-            </thead>
-            <tbody id="stockTableBody"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th class="stock-info">股票代码</th>
+                        <th class="stock-info">股票名称</th>
+                        <th class="stock-info">当前价</th>
+                        <th class="stock-info">基准价</th>
+                        <th class="group-1">买1</th>
+                        <th class="group-1">止盈1</th>
+                        <th class="group-1">止损1</th>
+                        <th class="group-2">买2</th>
+                        <th class="group-2">止盈2</th>
+                        <th class="group-2">止损2</th>
+                        <th class="group-3">买3</th>
+                        <th class="group-3">止盈3</th>
+                        <th class="group-3">止损3</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>数据仅供参考，不构成投资建议</p>
+        </div>
     </div>
 
-    <script>
-        // 默认显示今天
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateInput').value = today;
+    <!-- Hidden container for PDF export -->
+    <div id="pdfContainer" style="display: none;"></div>
 
-        // 回车触发查询
-        document.getElementById('dateInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') queryStockN();
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.checked = false;
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeToggle.checked = true;
+        }
+
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
         });
+
+        // Get today's date in YYYY-MM-DD format
+        function getTodayStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize date input with today
+        const dateInput = document.getElementById('dateInput');
+        dateInput.value = getTodayStr();
 
         function getApiUrl() {
             const port = window.location.port;
@@ -208,13 +702,32 @@
             return '';
         }
 
+        function calcPrices(basePrice) {
+            const buy1 = basePrice * 1.03;
+            const buy2 = basePrice * 1.04;
+            const buy3 = basePrice * 1.05;
+
+            return {
+                buy1: buy1,
+                profit1: buy1 * 1.05,
+                loss1: buy1 * 0.95,
+                buy2: buy2,
+                profit2: buy2 * 1.05,
+                loss2: buy2 * 0.95,
+                buy3: buy3,
+                profit3: buy3 * 1.05,
+                loss3: buy3 * 0.95,
+            };
+        }
+
         async function queryStockN() {
-            const dateInput = document.getElementById('dateInput');
-            const queryBtn = document.getElementById('queryBtn');
             const errorEl = document.getElementById('errorMessage');
             const loadingEl = document.getElementById('loading');
             const emptyEl = document.getElementById('emptyMessage');
-            const tableBody = document.getElementById('stockTableBody');
+            const tableWrapper = document.querySelector('.table-wrapper');
+            const stockCountEl = document.getElementById('stockCount');
+            const totalAmountEl = document.getElementById('totalAmount');
+            const exportBtn = document.getElementById('exportBtn');
 
             const date = dateInput.value;
             if (!date) {
@@ -225,9 +738,11 @@
 
             errorEl.classList.remove('show');
             emptyEl.classList.remove('show');
+            tableWrapper.style.display = 'none';
             loadingEl.classList.add('show');
-            queryBtn.disabled = true;
-            tableBody.innerHTML = '';
+            stockCountEl.textContent = '-';
+            totalAmountEl.textContent = '-';
+            exportBtn.disabled = true;
 
             try {
                 const baseUrl = getApiUrl();
@@ -241,28 +756,163 @@
 
                 if (!data || data.length === 0) {
                     emptyEl.classList.add('show');
+                    exportBtn.disabled = true;
                     return;
                 }
 
+                // Update stats
+                stockCountEl.textContent = data.length;
+                totalAmountEl.textContent = date;
+
+                // Render table
+                const tableBody = document.getElementById('stockTableBody');
+                tableBody.innerHTML = '';
+
                 data.forEach(item => {
+                    const prices = calcPrices(item.base_price);
+                    const currentPrice = item.current_price;
+
+                    // Check if any take profit > current price
+                    const shouldWarn = prices.profit1 > currentPrice || prices.profit2 > currentPrice || prices.profit3 > currentPrice;
+
                     const tr = document.createElement('tr');
+                    tr.className = shouldWarn ? 'warn-row' : '';
                     tr.innerHTML = `
-                        <td class="stock-name">${item.name}</td>
-                        <td class="price-cell">${item.price.toFixed(2)}</td>
-                        <td class="buy-price">${item.buy_price.toFixed(2)}</td>
-                        <td class="take-profit">${item.take_profit_price.toFixed(2)}</td>
-                        <td class="stop-loss">${item.stop_loss_price.toFixed(2)}</td>
+                        <td class="stock-info"><span class="stock-code">${item.code}</span></td>
+                        <td class="stock-info"><span class="stock-name">${item.name}</span></td>
+                        <td class="price-cell">${item.current_price.toFixed(2)}</td>
+                        <td class="price-cell">${item.base_price.toFixed(2)}</td>
+                        <td class="group-1-buy buy-price">${prices.buy1.toFixed(2)}</td>
+                        <td class="group-1-profit take-profit">${prices.profit1.toFixed(2)}</td>
+                        <td class="group-1-loss stop-loss">${prices.loss1.toFixed(2)}</td>
+                        <td class="group-2-buy buy-price">${prices.buy2.toFixed(2)}</td>
+                        <td class="group-2-profit take-profit">${prices.profit2.toFixed(2)}</td>
+                        <td class="group-2-loss stop-loss">${prices.loss2.toFixed(2)}</td>
+                        <td class="group-3-buy buy-price">${prices.buy3.toFixed(2)}</td>
+                        <td class="group-3-profit take-profit">${prices.profit3.toFixed(2)}</td>
+                        <td class="group-3-loss stop-loss">${prices.loss3.toFixed(2)}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
+
+                tableWrapper.style.display = 'block';
+                exportBtn.disabled = false;
+
+                // Store data for PDF export
+                window.stockData = data;
+                window.currentDate = date;
             } catch (err) {
                 loadingEl.classList.remove('show');
                 errorEl.textContent = `错误：${err.message}`;
                 errorEl.classList.add('show');
-            } finally {
-                queryBtn.disabled = false;
+                exportBtn.disabled = true;
             }
         }
+
+        async function exportToPdf() {
+            const exportBtn = document.getElementById('exportBtn');
+            const originalText = exportBtn.innerHTML;
+
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="animate-spin">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                导出中...
+            `;
+
+            try {
+                // Create PDF container
+                const pdfContainer = document.getElementById('pdfContainer');
+                const data = window.stockData || [];
+                const date = window.currentDate || dateInput.value;
+
+                // Build PDF HTML
+                let tableRows = '';
+                data.forEach(item => {
+                    const prices = calcPrices(item.base_price);
+                    const currentPrice = item.current_price;
+
+                    // Check if any take profit > current price
+                    const shouldWarn = prices.profit1 > currentPrice || prices.profit2 > currentPrice || prices.profit3 > currentPrice;
+
+                    tableRows += `
+                        <tr class="${shouldWarn ? 'warn-row' : ''}">
+                            <td class="stock-info"><span class="stock-code">${item.code}</span></td>
+                            <td class="stock-info"><span class="stock-name">${item.name}</span></td>
+                            <td class="price-cell">${item.current_price.toFixed(2)}</td>
+                            <td class="price-cell">${item.base_price.toFixed(2)}</td>
+                            <td class="group-1-buy buy-price">${prices.buy1.toFixed(2)}</td>
+                            <td class="group-1-profit take-profit">${prices.profit1.toFixed(2)}</td>
+                            <td class="group-1-loss stop-loss">${prices.loss1.toFixed(2)}</td>
+                            <td class="group-2-buy buy-price">${prices.buy2.toFixed(2)}</td>
+                            <td class="group-2-profit take-profit">${prices.profit2.toFixed(2)}</td>
+                            <td class="group-2-loss stop-loss">${prices.loss2.toFixed(2)}</td>
+                            <td class="group-3-buy buy-price">${prices.buy3.toFixed(2)}</td>
+                            <td class="group-3-profit take-profit">${prices.profit3.toFixed(2)}</td>
+                            <td class="group-3-loss stop-loss">${prices.loss3.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                pdfContainer.innerHTML = `
+                    <div class="pdf-export-container">
+                        <div class="pdf-header">
+                            <h1>N 规则股票池</h1>
+                            <p>参考日期：${date} | 共 ${data.length} 只股票</p>
+                        </div>
+                        <table class="pdf-table">
+                            <thead>
+                                <tr>
+                                    <th class="stock-info">股票代码</th>
+                                    <th class="stock-info">股票名称</th>
+                                    <th class="stock-info">当前价</th>
+                                    <th class="stock-info">基准价</th>
+                                    <th class="group-1">买1</th>
+                                    <th class="group-1">止盈1</th>
+                                    <th class="group-1">止损1</th>
+                                    <th class="group-2">买2</th>
+                                    <th class="group-2">止盈2</th>
+                                    <th class="group-2">止损2</th>
+                                    <th class="group-3">买3</th>
+                                    <th class="group-3">止盈3</th>
+                                    <th class="group-3">止损3</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                        <div class="pdf-footer">
+                            <p>数据仅供参考，不构成投资建议 | 生成时间：${new Date().toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+
+                pdfContainer.style.display = 'block';
+
+                const opt = {
+                    margin: 10,
+                    filename: `N规则股票池_${date}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+
+                await html2pdf().set(opt).from(pdfContainer.firstElementChild).save();
+
+                pdfContainer.style.display = 'none';
+            } catch (err) {
+                alert('导出失败: ' + err.message);
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalText;
+            }
+        }
+
+        // Auto load on page load
+        document.addEventListener('DOMContentLoaded', queryStockN);
+
+        // Auto load when date changes
+        dateInput.addEventListener('change', queryStockN);
     </script>
 </body>
 </html>

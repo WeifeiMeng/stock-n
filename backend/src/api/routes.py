@@ -42,10 +42,8 @@ async def get_stock_n_list(date: str) -> list[StockNItem]:
 
     - **date**: 日期，格式 YYYY-MM-DD
     - **name**: 股票名称
-    - **price**: 当前价格（昨日收盘价）
-    - **buy_price**: 买入价格（base_price × 1.03）
-    - **take_profit_price**: 止盈价格（base_price × 1.08）
-    - **stop_loss_price**: 止损价格（base_price × 0.98）
+    - **current_price**: 当前价格（昨日收盘价）
+    - **base_price**: 基础价格（前两交易日收盘价）
     """
     try:
         entities = await StockNDAO.list_by_trade_date(date)
@@ -58,13 +56,11 @@ async def get_stock_n_list(date: str) -> list[StockNItem]:
             if base_price <= 0:
                 continue
 
-            buy_price = round(base_price * 1.03, 2)
             result.append(StockNItem(
+                code=entity.code,
                 name=entity.name,
-                price=entity.end_pri,
-                buy_price=buy_price,
-                take_profit_price=round(base_price * 1.08, 2),
-                stop_loss_price=round(base_price * 0.98, 2),
+                current_price=entity.end_pri,
+                base_price=base_price,
             ))
 
         return result

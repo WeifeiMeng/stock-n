@@ -51,8 +51,7 @@ class ZtStockInfoResponse(BaseModel):
 
 class StockNItem(BaseModel):
     """stock_n 列表项"""
+    code: str = Field(..., description="股票代码")
     name: str = Field(..., description="股票名称")
-    price: float = Field(..., description="当前价格（昨日收盘价）")
-    buy_price: float = Field(..., description="买入价格（前两交易日收盘 × 1.03）")
-    take_profit_price: float = Field(..., description="止盈价格（买入价格 × 1.05）")
-    stop_loss_price: float = Field(..., description="止损价格（买入价格 × 0.95）")
+    current_price: float = Field(..., description="当前价格（昨日收盘价）")
+    base_price: float = Field(..., description="基础价格（前两交易日收盘价）")

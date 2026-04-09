@@ -26,6 +26,9 @@ token = 'A7EB52CA-9651-4E41-8905-21AC0EA9F954'
 def _parse_json(response: requests.Response, url: str) -> Optional[Any]:
     """安全解析 JSON，失败时记录日志并返回 None"""
     try:
+        # 单独检查 429 状态码，抛出更明确的异常
+        if response.status_code == 429:
+            raise requests.exceptions.HTTPError("API Rate Limited", response=response)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:

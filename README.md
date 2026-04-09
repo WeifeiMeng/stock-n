@@ -24,7 +24,43 @@ stock-n/
 
 ## 快速开始
 
-### 使用 Docker Compose（推荐）
+### 一键启动（推荐）
+
+```bash
+# Windows
+start.bat
+
+# Linux/Mac
+chmod +x start.sh
+./start.sh
+```
+
+启动后访问：
+- N 规则股票池：http://localhost:8080/stock-n.html
+- 后端 API：http://localhost:8000
+- API 文档：http://localhost:8000/docs
+
+### 手动运行（开发）
+
+**后端：**
+
+```bash
+cd backend
+uv sync
+uv run python main.py
+# 服务地址：http://localhost:8000
+# API 文档：http://localhost:8000/docs
+```
+
+**前端：**
+
+```bash
+cd frontend
+python -m http.server 8080
+# 访问：http://localhost:8080/stock-n.html
+```
+
+### Docker Compose（生产）
 
 ```bash
 # 启动所有服务
@@ -33,25 +69,7 @@ docker-compose up -d
 # 服务地址：
 # - 前端：http://localhost
 # - 后端：http://localhost:8000
-# - API文档：http://localhost:8000/docs
-```
-
-### 手动运行
-
-**后端：**
-
-```bash
-cd backend
-uv sync
-uv run python3 main.py
-```
-
-**前端：**
-
-```bash
-cd frontend
-python3 -m http.server 8080
-# 访问：http://localhost:8080
+# - API 文档：http://localhost:8000/docs
 ```
 
 ## 功能特性

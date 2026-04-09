@@ -20,7 +20,7 @@ from src.vo.stock import ZtStockInfo, DayStockInfo
 logger = logging.getLogger(__name__)
 
 # 涨停阈值：收盘价较前日涨幅 >= 9.5% 视为涨停（主板约10%，科创板/创业板约20%用更高阈值）
-ZT_THRESHOLD = 1.095
+ZT_THRESHOLD = 1.10
 # 跌停阈值
 DT_THRESHOLD = 0.905
 # 涨停涨幅百分比（与 ZT_THRESHOLD 一致）
@@ -96,7 +96,8 @@ def _is_zt(prev_end_pri: float, curr_end_pri: float) -> bool:
     """判断是否涨停：当日收盘价较前日涨幅 >= 9.5%"""
     if prev_end_pri <= 0 or curr_end_pri <= 0:
         return False
-    return curr_end_pri / prev_end_pri >= ZT_THRESHOLD
+    rate = float((curr_end_pri + 0.01) / prev_end_pri) 
+    return rate > ZT_THRESHOLD
 
 
 def _is_dt(prev_end_pri: float, curr_end_pri: float) -> bool:
