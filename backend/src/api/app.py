@@ -3,7 +3,7 @@ FastAPI 应用主文件
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import root, calculate_prices, health_check, get_stock_n_list
+from .routes import root, calculate_prices, health_check, get_stock_n_list, run_filter_stock_n
 from .models import ZtStockInfoResponse, StockNItem
 from src.middleware import MySQLSessionMiddleware, close_mysql_engine
 from src.dao import init_all_tables
@@ -36,6 +36,7 @@ app.get("/")(root)
 app.post("/calculate", response_model=list[ZtStockInfoResponse])(calculate_prices)
 app.get("/health")(health_check)
 app.get("/stock-n/{date}", response_model=list[StockNItem])(get_stock_n_list)
+app.post("/stock-n/run-filter/{date}")(run_filter_stock_n)
 
 
 @app.on_event("shutdown")

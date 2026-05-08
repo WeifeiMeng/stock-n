@@ -47,6 +47,34 @@ from src.vo.stock import ZtStockInfo, StockNInfo, DayStockInfo
 
 logger = logging.getLogger(__name__)
 
+# ----------------------------------------------------------------------
+# 文件日志配置：每次运行记录到 log/{target_date}.log
+# ----------------------------------------------------------------------
+_FILE_HANDLER: logging.FileHandler | None = None
+
+
+def setup_file_logging(target_date: str) -> Path:
+    """在 backend/log/ 下创建日期命名的日志文件"""
+    log_dir = BACKEND_ROOT / "log"
+    log_dir.mkdir(exist_ok=True)
+
+    log_file = log_dir / f"{target_date}.log"
+
+    global _FILE_HANDLER
+    if _FILE_HANDLER is not None:
+        logging.getLogger().removeHandler(_FILE_HANDLER)
+
+    _FILE_HANDLER = logging.FileHandler(str(log_file), encoding="utf-8", mode="w")
+    _FILE_HANDLER.setLevel(logging.INFO)
+    _FILE_HANDLER.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    )
+    logging.getLogger().addHandler(_FILE_HANDLER)
+
+    logger.info("日志文件: %s", log_file)
+    return log_file
+
+
 # API 请求计数器
 class ApiCallCounter:
     _day_detail_count: int = 0
@@ -192,12 +220,15 @@ async def fetch_and_save_zt_stocks(prev_workday: str) -> list[ZtStockInfo]:
 # 工具函数：优先从 day_stock 读取日线数据，没有则调 API
 # ----------------------------------------------------------------------
 async def get_day_data_cached(
-    code: str, name: str, start_yyyymmdd: str, end_yyyymmdd: str
+    code: str, name: str, start_yyyymmdd: str, end_yyyymmdd: str,
+    min_records: int = 2
 ) -> list[DayStockInfo]:
     """
-    获取股票日线数据，优先从 day_stock 表读取，数据库没有则调 API 并保存。
+    获取股票日线数据，优先从 day_stock 表读取，数据库没有或数据不足则调 API 并保存。
     注意：数据库中 trade_date 存储为 'YYYY-MM-DD' 格式，但查询参数是 'YYYYMMDD'，需转换
     如果 API 返回空，则返回空列表
+
+    min_records: 期望的最小记录数，默认 2。如果 DB 中符合日期范围的记录少于这个数，会调 API 补充。
     """
     # 将 'YYYYMMDD' 格式转换为 'YYYY-MM-DD' 格式用于数据库查询
     start_date_fmt = f"{start_yyyymmdd[:4]}-{start_yyyymmdd[4:6]}-{start_yyyymmdd[6:8]}"
@@ -226,7 +257,7 @@ async def get_day_data_cached(
     ]
 
     # 如果数据库有足够数据，直接返回
-    if len(day_stock_infos) >= 2:
+    if len(day_stock_infos) >= min_records:
         return day_stock_infos
 
     # 数据库没有或数据不足，调 API
@@ -252,40 +283,49 @@ async def check_stock_all_rules(
     """
     检查单只股票是否满足所有规则：
     - 步骤3：目标日未涨停未跌停
-    - 规则4：涨停前 7 个交易日无跌停、无连续涨停
+    - 规则4：目标日前 7 个交易日无跌停、无连续涨停
     - 规则5：涨停前 30 个交易日内有涨停
     返回 True 表示通过所有规则，False 表示未通过
     """
     prev_yyyymmdd = prev_workday.replace('-', '')
     target_yyyymmdd = target_date.replace('-', '')
 
-    # 获取涨停日前7个交易日的数据（用于规则4检查）
-    rule4_start_obj = datetime.strptime(prev_workday, '%Y-%m-%d') - timedelta(days=14)
-    rule4_start_yyyymmdd = rule4_start_obj.strftime('%Y%m%d')
+    # 获取目标日前14个交易日的日期（保证能覆盖7个交易日）
+    rule4_start = await _get_n_prev_workday(target_date, 14)
+    rule4_start_yyyymmdd = rule4_start.replace('-', '')
 
-    # 获取涨停日前30个交易日的数据（用于规则5检查）
-    rule5_start_obj = datetime.strptime(prev_workday, '%Y-%m-%d') - timedelta(days=45)
-    rule5_start_yyyymmdd = rule5_start_obj.strftime('%Y%m%d')
+    # 获取涨停日前35个交易日的日期（保证能覆盖30个交易日）
+    rule5_start = await _get_n_prev_workday(prev_workday, 35)
+    rule5_start_yyyymmdd = rule5_start.replace('-', '')
 
     # 步骤3：获取目标日日线数据，检查目标日未涨停未跌停
     day_list_3 = await get_day_data_cached(stock.code, stock.name, prev_yyyymmdd, target_yyyymmdd)
     if len(day_list_3) < 2:
+        logger.info("❌ %s 步骤3失败：日线数据不足2条（prev=%s, target=%s）", stock.name, prev_yyyymmdd, target_yyyymmdd)
         return False
     lastday_info, today_info = day_list_3[0], day_list_3[1]
     if lastday_info.end_pri <= 0:
+        logger.info("❌ %s 步骤3失败：前一交易日收盘价<=0（%.2f）", stock.name, lastday_info.end_pri)
         return False
     # 目标日涨停或跌停则不符合
-    if (today_info.end_pri / lastday_info.end_pri >= ZT_THRESHOLD) or \
-       (today_info.end_pri / lastday_info.end_pri <= DT_THRESHOLD):
+    ratio_3 = today_info.end_pri / lastday_info.end_pri
+    if ratio_3 >= ZT_THRESHOLD:
+        logger.info("❌ %s 步骤3失败：目标日涨停（%.2f/%.2f=%.4f >= %.4f）", stock.name, today_info.end_pri, lastday_info.end_pri, ratio_3, ZT_THRESHOLD)
+        return False
+    if ratio_3 <= DT_THRESHOLD:
+        logger.info("❌ %s 步骤3失败：目标日跌停（%.2f/%.2f=%.4f <= %.4f）", stock.name, today_info.end_pri, lastday_info.end_pri, ratio_3, DT_THRESHOLD)
         return False
 
-    # 规则4：获取涨停日前7个交易日数据，检查无跌停、无连续涨停
-    day_list_4 = await get_day_data_cached(stock.code, stock.name, rule4_start_yyyymmdd, prev_yyyymmdd)
+
+    # 规则4：获取目标日前7个交易日数据，检查无跌停、无连续涨停
+    day_list_4 = await get_day_data_cached(stock.code, stock.name, rule4_start_yyyymmdd, target_yyyymmdd, min_records=8)
     if len(day_list_4) < 8:
+        logger.info("❌ %s 规则4失败：数据不足8条（仅%d条）", stock.name, len(day_list_4))
         return False
-    # day_list[-1] 是涨停日，前7个是涨停前的7个交易日
+    # day_list[-1] 是目标日，前7个是目标日前的7个交易日
     check_days = day_list_4[-8:-1]
     if len(check_days) != 7:
+        logger.info("❌ %s 规则4失败：前7个交易日数据不足（仅%d条）", stock.name, len(check_days))
         return False
 
     has_dt = False
@@ -297,25 +337,28 @@ async def check_stock_all_rules(
             continue
         if _is_dt(prev_pri, curr_pri):
             has_dt = True
+            logger.info("❌ %s 规则4失败：前7日出现跌停（%s, %.2f -> %.2f）", stock.name, check_days[i].date, prev_pri, curr_pri)
             break
         if _is_zt(prev_pri, curr_pri):
             consecutive_zt += 1
             if consecutive_zt >= 2:
+                logger.info("❌ %s 规则4失败：前7日出现连续涨停（%s, %.2f -> %.2f）", stock.name, check_days[i].date, prev_pri, curr_pri)
                 break
         else:
             consecutive_zt = 0
-        print(f"has_dt: {has_dt}, consecutive_zt: {consecutive_zt}, day: {check_days[i].date}")
-        
+
     if has_dt or consecutive_zt >= 2:
         return False
 
     # 规则5：获取涨停日前30个交易日数据，检查有涨停记录
-    day_list_5 = await get_day_data_cached(stock.code, stock.name, rule5_start_yyyymmdd, prev_yyyymmdd)
+    day_list_5 = await get_day_data_cached(stock.code, stock.name, rule5_start_yyyymmdd, prev_yyyymmdd, min_records=2)
     if len(day_list_5) < 2:
+        logger.info("❌ %s 规则5失败：历史数据不足2条", stock.name)
         return False
     # 取最后30个交易日（不包含涨停日本身）
     pre_days = day_list_5[-25:-2] if len(day_list_5) >= 25 else day_list_5[:-2]
     if len(pre_days) < 2:
+        logger.info("❌ %s 规则5失败：前30日数据不足2条", stock.name)
         return False
 
     has_zt = False
@@ -324,8 +367,10 @@ async def check_stock_all_rules(
             has_zt = True
             break
     if not has_zt:
+        logger.info("❌ %s 规则5失败：前30个交易日内无涨停记录", stock.name)
         return False
 
+    logger.info("✅ %s 通过所有规则", stock.name)
     return True
 
 
@@ -342,7 +387,8 @@ async def filter_stocks_by_all_rules(
     for stock in zt_list:
         if await check_stock_all_rules(stock, prev_workday, target_date):
             result.append(stock)
-    logger.info("通过所有规则筛选的股票数量: %d 只", len(result))
+    logger.info("====== 筛选结果：共 %d 只股票，通过 %d 只，未通过 %d 只 ======",
+                len(zt_list), len(result), len(zt_list) - len(result))
     return result
 
 
@@ -426,19 +472,19 @@ async def _run(target_date: str) -> None:
         # Step 2: 从 API 拉取并写入 zt_stock 表
         zt_list = await fetch_and_save_zt_stocks(prev_workday)
         if not zt_list:
-            print(f"[INFO] {prev_workday} 无涨停数据，跳过。")
+            logger.info("%s 无涨停数据，跳过。", prev_workday)
             return
 
         # Step 3-5: 检查所有股票是否满足所有规则（目标日未涨停跌停、规则4、规则5）
         # 每个股票内部会先查 DB，没有数据则调 API 获取并保存
         zt_list = await filter_stocks_by_all_rules(zt_list, prev_workday, target_date)
         if not zt_list:
-            print(f"[INFO] {target_date} 规则筛选后无股票。")
+            logger.info("%s 规则筛选后无股票。", target_date)
             return
 
         # Step 6: 写入 stock_n 表
         inserted = await save_stock_n(zt_list, target_date, prev_workday)
-        print(f"[INFO] {target_date} 入库完成：zt_stock {len(zt_list)} 条，stock_n {inserted} 条。")
+        logger.info("%s 入库完成：zt_stock %d 条，stock_n %d 条。", target_date, len(zt_list), inserted)
 
     finally:
         logger.info(f"API 调用统计: get_zt_stock_list={ApiCallCounter.get_zt_stock_list_count()} 次, get_day_detail={ApiCallCounter.get_day_detail_count()} 次")
@@ -448,7 +494,18 @@ async def _run(target_date: str) -> None:
 def main() -> None:
     args = _parse_args()
     target_date = _resolve_date(args.date)
+
+    # 设置文件日志（覆盖同日期旧日志）
+    log_path = setup_file_logging(target_date)
+    logger.info("=" * 60)
+    logger.info("N 规则筛选启动 - 目标日期: %s", target_date)
+    logger.info("=" * 60)
+
     asyncio.run(_run(target_date))
+
+    logger.info("=" * 60)
+    logger.info("筛选完成，日志文件: %s", log_path)
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

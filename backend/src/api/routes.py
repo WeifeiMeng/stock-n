@@ -1,6 +1,10 @@
 """
 API 路由定义
 """
+import sys
+import asyncio
+from pathlib import Path
+
 from fastapi import HTTPException
 
 from src.service import n_calculate
@@ -66,3 +70,34 @@ async def get_stock_n_list(date: str) -> list[StockNItem]:
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取 stock_n 数据失败: {str(e)}")
+
+
+async def run_filter_stock_n(date: str):
+    """
+    执行 filter_stock_n.py 筛选脚本。
+
+    - **date**: 日期，格式 YYYY-MM-DD
+    """
+    backend_root = Path(__file__).resolve().parent.parent.parent
+    script_path = backend_root / "scripts" / "filter_stock_n.py"
+
+    if not script_path.exists():
+        raise HTTPException(status_code=500, detail=f"脚本不存在: {script_path}")
+
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable, str(script_path), "--date", date,
+        cwd=str(backend_root),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
+        return {
+            "success": proc.returncode == 0,
+            "stdout": stdout.decode("utf-8", errors="replace"),
+            "stderr": stderr.decode("utf-8", errors="replace"),
+        }
+    except asyncio.TimeoutError:
+        proc.kill()
+        raise HTTPException(status_code=504, detail="脚本执行超时")
