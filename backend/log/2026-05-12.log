@@ -1,0 +1,313 @@
+2026-05-12 22:34:08 INFO: 日志文件: D:\code\stock-n\backend\log\2026-05-12.log
+2026-05-12 22:34:08 INFO: ============================================================
+2026-05-12 22:34:08 INFO: N 规则筛选启动 - 目标日期: 2026-05-12
+2026-05-12 22:34:08 INFO: ============================================================
+2026-05-12 22:34:08 INFO: 目标日期: 2026-05-12，前一交易日(涨停日): 2026-05-11
+2026-05-12 22:34:08 INFO: 从 zt_stock 表读取 2026-05-11 涨停股票 92 只
+2026-05-12 22:34:08 INFO: 过滤 ST/*ST/北交所后剩余 92 只
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688189', name='南新制药', market='IB', industry='', start_pri=9.0, end_pri=10.55, highest_pri=10.55, lowest_pri=9.0, date='2026-05-11'), DayStockInfo(code='688189', name='南新制药', market='IB', industry='', start_pri=10.55, end_pri=10.49, highest_pri=11.39, lowest_pri=10.12, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 3, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 南新制药 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688551', name='科威尔', market='IB', industry='', start_pri=52.68, end_pri=60.46, highest_pri=60.46, lowest_pri=52.68, date='2026-05-11'), DayStockInfo(code='688551', name='科威尔', market='IB', industry='', start_pri=62.3, end_pri=62.4, highest_pri=63.5, lowest_pri=60.31, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 科威尔 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688603', name='天承科技', market='IB', industry='', start_pri=103.0, end_pri=121.18, highest_pri=121.18, lowest_pri=102.8, date='2026-05-11'), DayStockInfo(code='688603', name='天承科技', market='IB', industry='', start_pri=130.5, end_pri=131.76, highest_pri=135.0, lowest_pri=122.5, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 天承科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688328', name='深科达', market='IB', industry='', start_pri=60.03, end_pri=70.31, highest_pri=70.31, lowest_pri=58.96, date='2026-05-11'), DayStockInfo(code='688328', name='深科达', market='IB', industry='', start_pri=71.57, end_pri=67.13, highest_pri=72.0, lowest_pri=66.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 2, 2
+2026-05-12 22:34:08 INFO: ❌ 深科达 规则4失败：前7日出现连续涨停（2026-04-29, 49.36 -> 54.44）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688146', name='中船特气', market='IB', industry='', start_pri=82.6, end_pri=95.81, highest_pri=95.81, lowest_pri=81.13, date='2026-05-11'), DayStockInfo(code='688146', name='中船特气', market='IB', industry='', start_pri=100.6, end_pri=98.0, highest_pri=101.9, lowest_pri=95.08, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 中船特气 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688766', name='普冉股份', market='IB', industry='', start_pri=348.77, end_pri=381.0, highest_pri=381.0, lowest_pri=342.9, date='2026-05-11'), DayStockInfo(code='688766', name='普冉股份', market='IB', industry='', start_pri=388.23, end_pri=398.85, highest_pri=408.18, lowest_pri=377.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 普冉股份 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688545', name='兴福电子', market='IB', industry='', start_pri=72.02, end_pri=75.6, highest_pri=75.6, lowest_pri=71.55, date='2026-05-11'), DayStockInfo(code='688545', name='兴福电子', market='IB', industry='', start_pri=77.0, end_pri=80.0, highest_pri=83.08, lowest_pri=75.16, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 兴福电子 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='300302', name='同有科技', market='SZ', industry='', start_pri=40.0, end_pri=42.6, highest_pri=42.6, lowest_pri=40.0, date='2026-05-11'), DayStockInfo(code='300302', name='同有科技', market='SZ', industry='', start_pri=44.61, end_pri=42.81, highest_pri=45.88, lowest_pri=42.53, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 同有科技 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688618', name='三旺通信', market='IB', industry='', start_pri=40.5, end_pri=46.8, highest_pri=46.8, lowest_pri=40.5, date='2026-05-11'), DayStockInfo(code='688618', name='三旺通信', market='IB', industry='', start_pri=47.5, end_pri=44.87, highest_pri=48.45, lowest_pri=44.34, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 三旺通信 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='301188', name='力诺药包', market='SZ', industry='', start_pri=27.5, end_pri=33.0, highest_pri=33.0, lowest_pri=27.5, date='2026-05-11'), DayStockInfo(code='301188', name='力诺药包', market='SZ', industry='', start_pri=34.04, end_pri=33.03, highest_pri=34.56, lowest_pri=32.41, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 力诺药包 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='300604', name='长川科技', market='SZ', industry='', start_pri=186.0, end_pri=218.41, highest_pri=218.41, lowest_pri=183.98, date='2026-05-11'), DayStockInfo(code='300604', name='长川科技', market='SZ', industry='', start_pri=219.99, end_pri=213.08, highest_pri=220.0, lowest_pri=209.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 长川科技 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='300736', name='百邦科技', market='SZ', industry='', start_pri=36.06, end_pri=40.16, highest_pri=40.16, lowest_pri=36.06, date='2026-05-11'), DayStockInfo(code='300736', name='百邦科技', market='SZ', industry='', start_pri=48.08, end_pri=45.27, highest_pri=48.19, lowest_pri=44.8, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 百邦科技 步骤3失败：目标日涨停（45.27/40.16=1.1272 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='688350', name='富淼科技', market='IB', industry='', start_pri=36.68, end_pri=39.08, highest_pri=39.08, lowest_pri=34.88, date='2026-05-11'), DayStockInfo(code='688350', name='富淼科技', market='IB', industry='', start_pri=40.83, end_pri=34.5, highest_pri=40.83, lowest_pri=32.69, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 富淼科技 步骤3失败：目标日跌停（34.50/39.08=0.8828 <= 0.9050）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='300616', name='尚品宅配', market='SZ', industry='', start_pri=14.74, end_pri=17.59, highest_pri=17.59, lowest_pri=14.34, date='2026-05-11'), DayStockInfo(code='300616', name='尚品宅配', market='SZ', industry='', start_pri=17.6, end_pri=16.6, highest_pri=17.6, lowest_pri=16.4, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 尚品宅配 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='300449', name='汉邦高科', market='SZ', industry='', start_pri=9.56, end_pri=9.56, highest_pri=9.56, lowest_pri=9.56, date='2026-05-11'), DayStockInfo(code='300449', name='汉邦高科', market='SZ', industry='', start_pri=11.47, end_pri=11.47, highest_pri=11.47, lowest_pri=11.47, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 汉邦高科 步骤3失败：目标日涨停（11.47/9.56=1.1998 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002108', name='沧州明珠', market='SZ', industry='', start_pri=6.39, end_pri=6.44, highest_pri=6.44, lowest_pri=6.37, date='2026-05-11'), DayStockInfo(code='002108', name='沧州明珠', market='SZ', industry='', start_pri=6.43, end_pri=6.12, highest_pri=6.43, lowest_pri=6.08, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 沧州明珠 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600530', name='交大昂立', market='SH', industry='', start_pri=6.49, end_pri=6.55, highest_pri=6.55, lowest_pri=6.41, date='2026-05-11'), DayStockInfo(code='600530', name='交大昂立', market='SH', industry='', start_pri=7.21, end_pri=7.21, highest_pri=7.21, lowest_pri=6.71, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 交大昂立 步骤3失败：目标日涨停（7.21/6.55=1.1008 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002124', name='天邦食品', market='SZ', industry='', start_pri=2.59, end_pri=2.84, highest_pri=2.84, lowest_pri=2.59, date='2026-05-11'), DayStockInfo(code='002124', name='天邦食品', market='SZ', industry='', start_pri=2.84, end_pri=2.81, highest_pri=2.9, lowest_pri=2.77, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 天邦食品 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600748', name='上实发展', market='SH', industry='', start_pri=5.71, end_pri=6.03, highest_pri=6.03, lowest_pri=5.71, date='2026-05-11'), DayStockInfo(code='600748', name='上实发展', market='SH', industry='', start_pri=6.22, end_pri=5.88, highest_pri=6.27, lowest_pri=5.76, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 上实发展 规则4失败：前7日出现连续涨停（2026-05-11, 5.48 -> 6.03）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600078', name='澄星股份', market='SH', industry='', start_pri=14.75, end_pri=16.23, highest_pri=16.23, lowest_pri=14.6, date='2026-05-11'), DayStockInfo(code='600078', name='澄星股份', market='SH', industry='', start_pri=16.23, end_pri=15.3, highest_pri=16.39, lowest_pri=15.06, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 澄星股份 规则4失败：前7日出现连续涨停（2026-05-11, 14.75 -> 16.23）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000425', name='徐工机械', market='SZ', industry='', start_pri=10.47, end_pri=10.97, highest_pri=10.97, lowest_pri=10.41, date='2026-05-11'), DayStockInfo(code='000425', name='徐工机械', market='SZ', industry='', start_pri=10.95, end_pri=10.47, highest_pri=11.06, lowest_pri=10.44, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 徐工机械 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600379', name='宝光股份', market='SH', industry='', start_pri=17.09, end_pri=18.43, highest_pri=18.43, lowest_pri=16.81, date='2026-05-11'), DayStockInfo(code='600379', name='宝光股份', market='SH', industry='', start_pri=18.31, end_pri=17.19, highest_pri=19.2, lowest_pri=16.64, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 2, 2
+2026-05-12 22:34:08 INFO: ❌ 宝光股份 规则4失败：前7日出现连续涨停（2026-04-30, 15.25 -> 16.78）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='601609', name='金田股份', market='SH', industry='', start_pri=10.5, end_pri=11.41, highest_pri=11.41, lowest_pri=10.5, date='2026-05-11'), DayStockInfo(code='601609', name='金田股份', market='SH', industry='', start_pri=12.02, end_pri=12.09, highest_pri=12.55, lowest_pri=11.89, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 金田股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000712', name='锦龙股份', market='SZ', industry='', start_pri=10.42, end_pri=11.41, highest_pri=11.41, lowest_pri=10.38, date='2026-05-11'), DayStockInfo(code='000712', name='锦龙股份', market='SZ', industry='', start_pri=11.34, end_pri=11.52, highest_pri=12.26, lowest_pri=11.29, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 锦龙股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600236', name='桂冠电力', market='SH', industry='', start_pri=10.57, end_pri=11.63, highest_pri=11.63, lowest_pri=10.51, date='2026-05-11'), DayStockInfo(code='600236', name='桂冠电力', market='SH', industry='', start_pri=12.18, end_pri=11.94, highest_pri=12.65, lowest_pri=11.37, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 桂冠电力 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='605189', name='富春染织', market='SH', industry='', start_pri=18.99, end_pri=19.97, highest_pri=19.97, lowest_pri=18.62, date='2026-05-11'), DayStockInfo(code='605189', name='富春染织', market='SH', industry='', start_pri=19.97, end_pri=19.45, highest_pri=20.81, lowest_pri=19.02, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 富春染织 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002918', name='蒙娜丽莎', market='SZ', industry='', start_pri=12.73, end_pri=12.73, highest_pri=12.73, lowest_pri=12.73, date='2026-05-11'), DayStockInfo(code='002918', name='蒙娜丽莎', market='SZ', industry='', start_pri=14.0, end_pri=14.0, highest_pri=14.0, lowest_pri=14.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 蒙娜丽莎 步骤3失败：目标日涨停（14.00/12.73=1.0998 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='605186', name='健麾信息', market='SH', industry='', start_pri=20.5, end_pri=22.39, highest_pri=22.39, lowest_pri=20.35, date='2026-05-11'), DayStockInfo(code='605186', name='健麾信息', market='SH', industry='', start_pri=22.72, end_pri=23.21, highest_pri=24.63, lowest_pri=22.72, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 健麾信息 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='605006', name='山东玻纤', market='SH', industry='', start_pri=16.04, end_pri=16.36, highest_pri=16.36, lowest_pri=15.92, date='2026-05-11'), DayStockInfo(code='605006', name='山东玻纤', market='SH', industry='', start_pri=17.5, end_pri=16.99, highest_pri=17.7, lowest_pri=14.97, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 5, 2
+2026-05-12 22:34:08 INFO: ❌ 山东玻纤 规则4失败：前7日出现连续涨停（2026-05-08, 13.52 -> 14.87）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002491', name='通鼎互联', market='SZ', industry='', start_pri=22.73, end_pri=22.73, highest_pri=22.73, lowest_pri=22.23, date='2026-05-11'), DayStockInfo(code='002491', name='通鼎互联', market='SZ', industry='', start_pri=24.5, end_pri=25.0, highest_pri=25.0, lowest_pri=23.31, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 通鼎互联 步骤3失败：目标日涨停（25.00/22.73=1.0999 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002552', name='宝鼎科技', market='SZ', industry='', start_pri=30.33, end_pri=30.42, highest_pri=30.42, lowest_pri=27.81, date='2026-05-11'), DayStockInfo(code='002552', name='宝鼎科技', market='SZ', industry='', start_pri=31.62, end_pri=33.46, highest_pri=33.46, lowest_pri=30.3, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 宝鼎科技 步骤3失败：目标日涨停（33.46/30.42=1.0999 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603269', name='海鸥股份', market='SH', industry='', start_pri=17.39, end_pri=18.56, highest_pri=18.56, lowest_pri=17.39, date='2026-05-11'), DayStockInfo(code='603269', name='海鸥股份', market='SH', industry='', start_pri=19.86, end_pri=20.42, highest_pri=20.42, lowest_pri=19.3, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 海鸥股份 步骤3失败：目标日涨停（20.42/18.56=1.1002 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002971', name='和远气体', market='SZ', industry='', start_pri=31.16, end_pri=34.27, highest_pri=34.27, lowest_pri=31.16, date='2026-05-11'), DayStockInfo(code='002971', name='和远气体', market='SZ', industry='', start_pri=34.61, end_pri=33.12, highest_pri=35.4, lowest_pri=32.93, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 和远气体 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603499', name='翔港科技', market='SH', industry='', start_pri=21.0, end_pri=23.07, highest_pri=23.07, lowest_pri=20.99, date='2026-05-11'), DayStockInfo(code='603499', name='翔港科技', market='SH', industry='', start_pri=23.06, end_pri=22.45, highest_pri=23.76, lowest_pri=22.37, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 翔港科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600330', name='天通股份', market='SH', industry='', start_pri=30.0, end_pri=32.08, highest_pri=32.08, lowest_pri=29.3, date='2026-05-11'), DayStockInfo(code='600330', name='天通股份', market='SH', industry='', start_pri=33.97, end_pri=32.66, highest_pri=34.0, lowest_pri=31.03, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 天通股份 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002585', name='双星新材', market='SZ', industry='', start_pri=7.95, end_pri=8.68, highest_pri=8.68, lowest_pri=7.93, date='2026-05-11'), DayStockInfo(code='002585', name='双星新材', market='SZ', industry='', start_pri=9.0, end_pri=8.78, highest_pri=9.29, lowest_pri=8.45, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 双星新材 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000636', name='风华高科', market='SZ', industry='', start_pri=26.38, end_pri=28.46, highest_pri=28.46, lowest_pri=26.2, date='2026-05-11'), DayStockInfo(code='000636', name='风华高科', market='SZ', industry='', start_pri=28.97, end_pri=29.45, highest_pri=29.85, lowest_pri=28.03, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 风华高科 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001211', name='双枪科技', market='SZ', industry='', start_pri=44.5, end_pri=48.68, highest_pri=48.68, lowest_pri=44.09, date='2026-05-11'), DayStockInfo(code='001211', name='双枪科技', market='SZ', industry='', start_pri=49.5, end_pri=53.55, highest_pri=53.55, lowest_pri=49.41, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 双枪科技 步骤3失败：目标日涨停（53.55/48.68=1.1000 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600172', name='黄河旋风', market='SH', industry='', start_pri=9.78, end_pri=9.78, highest_pri=9.78, lowest_pri=9.78, date='2026-05-11'), DayStockInfo(code='600172', name='黄河旋风', market='SH', industry='', start_pri=10.33, end_pri=10.76, highest_pri=10.76, lowest_pri=9.9, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 黄河旋风 步骤3失败：目标日涨停（10.76/9.78=1.1002 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603936', name='博敏电子', market='SH', industry='', start_pri=19.0, end_pri=20.22, highest_pri=20.22, lowest_pri=18.49, date='2026-05-11'), DayStockInfo(code='603936', name='博敏电子', market='SH', industry='', start_pri=20.3, end_pri=20.22, highest_pri=20.96, lowest_pri=20.01, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 3, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 博敏电子 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001259', name='利仁科技', market='SZ', industry='', start_pri=37.95, end_pri=41.32, highest_pri=41.32, lowest_pri=37.56, date='2026-05-11'), DayStockInfo(code='001259', name='利仁科技', market='SZ', industry='', start_pri=45.45, end_pri=45.45, highest_pri=45.45, lowest_pri=45.45, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 利仁科技 步骤3失败：目标日涨停（45.45/41.32=1.1000 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600584', name='长电科技', market='SH', industry='', start_pri=53.8, end_pri=55.83, highest_pri=55.83, lowest_pri=53.19, date='2026-05-11'), DayStockInfo(code='600584', name='长电科技', market='SH', industry='', start_pri=56.76, end_pri=55.24, highest_pri=56.99, lowest_pri=54.6, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 长电科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603757', name='大元泵业', market='SH', industry='', start_pri=57.12, end_pri=60.45, highest_pri=60.45, lowest_pri=57.1, date='2026-05-11'), DayStockInfo(code='603757', name='大元泵业', market='SH', industry='', start_pri=62.0, end_pri=60.52, highest_pri=63.0, lowest_pri=58.3, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 大元泵业 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001221', name='悍高集团', market='SZ', industry='', start_pri=58.0, end_pri=63.53, highest_pri=63.53, lowest_pri=57.76, date='2026-05-11'), DayStockInfo(code='001221', name='悍高集团', market='SZ', industry='', start_pri=64.61, end_pri=60.61, highest_pri=65.49, lowest_pri=60.5, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 悍高集团 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='601858', name='中国科传', market='SH', industry='', start_pri=25.01, end_pri=27.81, highest_pri=27.81, lowest_pri=24.95, date='2026-05-11'), DayStockInfo(code='601858', name='中国科传', market='SH', industry='', start_pri=27.81, end_pri=29.4, highest_pri=30.0, lowest_pri=27.72, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 中国科传 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000811', name='冰轮环境', market='SZ', industry='', start_pri=27.5, end_pri=28.91, highest_pri=28.91, lowest_pri=27.16, date='2026-05-11'), DayStockInfo(code='000811', name='冰轮环境', market='SZ', industry='', start_pri=29.2, end_pri=28.91, highest_pri=30.15, lowest_pri=28.4, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 冰轮环境 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='605090', name='九丰能源', market='SH', industry='', start_pri=43.25, end_pri=47.6, highest_pri=47.6, lowest_pri=43.25, date='2026-05-11'), DayStockInfo(code='605090', name='九丰能源', market='SH', industry='', start_pri=48.06, end_pri=45.6, highest_pri=48.1, lowest_pri=44.94, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 九丰能源 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603773', name='沃格光电', market='SH', industry='', start_pri=74.08, end_pri=80.03, highest_pri=80.03, lowest_pri=73.67, date='2026-05-11'), DayStockInfo(code='603773', name='沃格光电', market='SH', industry='', start_pri=82.18, end_pri=81.76, highest_pri=86.03, lowest_pri=78.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 沃格光电 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603275', name='众辰科技', market='SH', industry='', start_pri=48.47, end_pri=53.32, highest_pri=53.32, lowest_pri=48.47, date='2026-05-11'), DayStockInfo(code='603275', name='众辰科技', market='SH', industry='', start_pri=53.96, end_pri=53.6, highest_pri=55.6, lowest_pri=52.95, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 众辰科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603459', name='红板科技', market='SH', industry='', start_pri=89.16, end_pri=89.16, highest_pri=89.16, lowest_pri=89.16, date='2026-05-11'), DayStockInfo(code='603459', name='红板科技', market='SH', industry='', start_pri=98.08, end_pri=93.2, highest_pri=98.08, lowest_pri=89.03, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 5, 2
+2026-05-12 22:34:08 INFO: ❌ 红板科技 规则4失败：前7日出现连续涨停（2026-05-08, 73.68 -> 81.05）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002975', name='博杰股份', market='SZ', industry='', start_pri=100.29, end_pri=105.44, highest_pri=105.44, lowest_pri=100.0, date='2026-05-11'), DayStockInfo(code='002975', name='博杰股份', market='SZ', industry='', start_pri=110.79, end_pri=111.49, highest_pri=114.8, lowest_pri=106.5, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 博杰股份 规则4失败：前7日出现跌停（2026-05-11, 124.45 -> 105.44）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600259', name='中稀有色', market='SH', industry='', start_pri=100.01, end_pri=108.96, highest_pri=108.96, lowest_pri=99.81, date='2026-05-11'), DayStockInfo(code='600259', name='中稀有色', market='SH', industry='', start_pri=109.18, end_pri=107.18, highest_pri=110.0, lowest_pri=104.33, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 中稀有色 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000029', name='深深房Ａ', market='SZ', industry='', start_pri=21.9, end_pri=24.08, highest_pri=24.08, lowest_pri=21.8, date='2026-05-11'), DayStockInfo(code='000029', name='深深房Ａ', market='SZ', industry='', start_pri=24.49, end_pri=26.49, highest_pri=26.49, lowest_pri=24.1, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 深深房Ａ 步骤3失败：目标日涨停（26.49/24.08=1.1001 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002008', name='大族激光', market='SZ', industry='', start_pri=124.5, end_pri=134.27, highest_pri=134.27, lowest_pri=124.5, date='2026-05-11'), DayStockInfo(code='002008', name='大族激光', market='SZ', industry='', start_pri=134.2, end_pri=134.66, highest_pri=139.82, lowest_pri=128.28, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 大族激光 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001331', name='胜通能源', market='SZ', industry='', start_pri=50.61, end_pri=54.99, highest_pri=54.99, lowest_pri=50.61, date='2026-05-11'), DayStockInfo(code='001331', name='胜通能源', market='SZ', industry='', start_pri=55.0, end_pri=53.35, highest_pri=58.48, lowest_pri=51.7, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 胜通能源 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603150', name='万朗磁塑', market='SH', industry='', start_pri=67.0, end_pri=73.48, highest_pri=73.48, lowest_pri=65.46, date='2026-05-11'), DayStockInfo(code='603150', name='万朗磁塑', market='SH', industry='', start_pri=73.49, end_pri=72.93, highest_pri=75.77, lowest_pri=72.41, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 万朗磁塑 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600488', name='津药药业', market='SH', industry='', start_pri=6.0, end_pri=6.6, highest_pri=6.6, lowest_pri=5.83, date='2026-05-11'), DayStockInfo(code='600488', name='津药药业', market='SH', industry='', start_pri=6.65, end_pri=7.26, highest_pri=7.26, lowest_pri=6.55, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 津药药业 步骤3失败：目标日涨停（7.26/6.60=1.1000 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000672', name='上峰水泥', market='SZ', industry='', start_pri=14.36, end_pri=15.62, highest_pri=15.62, lowest_pri=14.36, date='2026-05-11'), DayStockInfo(code='000672', name='上峰水泥', market='SZ', industry='', start_pri=16.05, end_pri=17.18, highest_pri=17.18, lowest_pri=15.9, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 上峰水泥 步骤3失败：目标日涨停（17.18/15.62=1.0999 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002943', name='宇晶股份', market='SZ', industry='', start_pri=76.3, end_pri=81.95, highest_pri=81.95, lowest_pri=76.3, date='2026-05-11'), DayStockInfo(code='002943', name='宇晶股份', market='SZ', industry='', start_pri=81.8, end_pri=81.87, highest_pri=87.22, lowest_pri=79.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 宇晶股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600076', name='康欣新材', market='SH', industry='', start_pri=3.78, end_pri=3.96, highest_pri=3.96, lowest_pri=3.72, date='2026-05-11'), DayStockInfo(code='600076', name='康欣新材', market='SH', industry='', start_pri=4.36, end_pri=4.36, highest_pri=4.36, lowest_pri=4.25, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 康欣新材 步骤3失败：目标日涨停（4.36/3.96=1.1010 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600184', name='光电股份', market='SH', industry='', start_pri=26.07, end_pri=27.28, highest_pri=27.28, lowest_pri=26.05, date='2026-05-11'), DayStockInfo(code='600184', name='光电股份', market='SH', industry='', start_pri=29.99, end_pri=29.08, highest_pri=29.99, lowest_pri=27.83, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 光电股份 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000791', name='甘肃能源', market='SZ', industry='', start_pri=9.44, end_pri=10.12, highest_pri=10.12, lowest_pri=9.35, date='2026-05-11'), DayStockInfo(code='000791', name='甘肃能源', market='SZ', industry='', start_pri=10.14, end_pri=9.76, highest_pri=10.4, lowest_pri=9.61, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 甘肃能源 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600769', name='祥龙电业', market='SH', industry='', start_pri=18.0, end_pri=19.58, highest_pri=19.58, lowest_pri=18.0, date='2026-05-11'), DayStockInfo(code='600769', name='祥龙电业', market='SH', industry='', start_pri=20.56, end_pri=20.82, highest_pri=21.23, lowest_pri=19.58, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 祥龙电业 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001389', name='广合科技', market='SZ', industry='', start_pri=177.77, end_pri=190.3, highest_pri=190.3, lowest_pri=177.77, date='2026-05-11'), DayStockInfo(code='001389', name='广合科技', market='SZ', industry='', start_pri=194.3, end_pri=190.68, highest_pri=194.95, lowest_pri=185.88, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 3, 1
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 广合科技 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002281', name='光迅科技', market='SZ', industry='', start_pri=188.0, end_pri=198.79, highest_pri=198.79, lowest_pri=183.02, date='2026-05-11'), DayStockInfo(code='002281', name='光迅科技', market='SZ', industry='', start_pri=200.0, end_pri=201.5, highest_pri=208.8, lowest_pri=194.8, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 光迅科技 规则4失败：前7日出现连续涨停（2026-05-11, 180.72 -> 198.79）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='605255', name='天普股份', market='SH', industry='', start_pri=106.92, end_pri=113.43, highest_pri=113.43, lowest_pri=106.5, date='2026-05-11'), DayStockInfo(code='605255', name='天普股份', market='SH', industry='', start_pri=116.0, end_pri=117.13, highest_pri=122.1, lowest_pri=113.8, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 天普股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603738', name='泰晶科技', market='SH', industry='', start_pri=50.67, end_pri=51.71, highest_pri=51.71, lowest_pri=50.05, date='2026-05-11'), DayStockInfo(code='603738', name='泰晶科技', market='SH', industry='', start_pri=51.0, end_pri=54.28, highest_pri=54.99, lowest_pri=49.25, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: 4, 1
+2026-05-12 22:34:08 INFO: 5, 2
+2026-05-12 22:34:08 INFO: ❌ 泰晶科技 规则4失败：前7日出现连续涨停（2026-05-08, 42.74 -> 47.01）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002718', name='友邦吊顶', market='SZ', industry='', start_pri=70.59, end_pri=78.45, highest_pri=78.45, lowest_pri=70.32, date='2026-05-11'), DayStockInfo(code='002718', name='友邦吊顶', market='SZ', industry='', start_pri=82.51, end_pri=81.12, highest_pri=83.5, lowest_pri=79.3, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 友邦吊顶 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002865', name='钧达股份', market='SZ', industry='', start_pri=105.7, end_pri=106.18, highest_pri=106.18, lowest_pri=103.17, date='2026-05-11'), DayStockInfo(code='002865', name='钧达股份', market='SZ', industry='', start_pri=108.43, end_pri=103.92, highest_pri=110.0, lowest_pri=98.95, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 钧达股份 规则4失败：前7日出现连续涨停（2026-05-11, 96.53 -> 106.18）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600234', name='科新发展', market='SH', industry='', start_pri=29.5, end_pri=31.47, highest_pri=31.47, lowest_pri=29.29, date='2026-05-11'), DayStockInfo(code='600234', name='科新发展', market='SH', industry='', start_pri=31.5, end_pri=29.93, highest_pri=32.02, lowest_pri=28.69, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 科新发展 规则4失败：前7日出现连续涨停（2026-05-11, 28.61 -> 31.47）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002179', name='中航光电', market='SZ', industry='', start_pri=37.68, end_pri=40.61, highest_pri=40.61, lowest_pri=37.68, date='2026-05-11'), DayStockInfo(code='002179', name='中航光电', market='SZ', industry='', start_pri=41.77, end_pri=40.85, highest_pri=42.5, lowest_pri=40.67, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 中航光电 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603045', name='福达合金', market='SH', industry='', start_pri=68.35, end_pri=68.35, highest_pri=68.35, lowest_pri=68.35, date='2026-05-11'), DayStockInfo(code='603045', name='福达合金', market='SH', industry='', start_pri=75.19, end_pri=73.61, highest_pri=75.19, lowest_pri=69.8, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 2, 1
+2026-05-12 22:34:08 INFO: 3, 2
+2026-05-12 22:34:08 INFO: ❌ 福达合金 规则4失败：前7日出现连续涨停（2026-05-06, 46.68 -> 51.35）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002396', name='星网锐捷', market='SZ', industry='', start_pri=29.79, end_pri=31.81, highest_pri=31.81, lowest_pri=29.51, date='2026-05-11'), DayStockInfo(code='002396', name='星网锐捷', market='SZ', industry='', start_pri=32.86, end_pri=32.1, highest_pri=33.7, lowest_pri=31.31, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 星网锐捷 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002623', name='亚玛顿', market='SZ', industry='', start_pri=22.22, end_pri=24.33, highest_pri=24.33, lowest_pri=21.86, date='2026-05-11'), DayStockInfo(code='002623', name='亚玛顿', market='SZ', industry='', start_pri=25.49, end_pri=24.02, highest_pri=25.99, lowest_pri=23.26, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 亚玛顿 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000062', name='深圳华强', market='SZ', industry='', start_pri=36.19, end_pri=39.09, highest_pri=39.09, lowest_pri=36.19, date='2026-05-11'), DayStockInfo(code='000062', name='深圳华强', market='SZ', industry='', start_pri=39.5, end_pri=37.39, highest_pri=39.5, lowest_pri=37.0, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ✅ 深圳华强 通过所有规则
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000739', name='普洛药业', market='SZ', industry='', start_pri=17.43, end_pri=19.27, highest_pri=19.27, lowest_pri=17.26, date='2026-05-11'), DayStockInfo(code='000739', name='普洛药业', market='SZ', industry='', start_pri=19.35, end_pri=18.48, highest_pri=19.48, lowest_pri=18.4, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 普洛药业 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002066', name='瑞泰科技', market='SZ', industry='', start_pri=23.78, end_pri=25.66, highest_pri=25.66, lowest_pri=23.77, date='2026-05-11'), DayStockInfo(code='002066', name='瑞泰科技', market='SZ', industry='', start_pri=27.9, end_pri=23.93, highest_pri=28.23, lowest_pri=23.33, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 瑞泰科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600869', name='远东股份', market='SH', industry='', start_pri=19.39, end_pri=20.82, highest_pri=20.82, lowest_pri=19.39, date='2026-05-11'), DayStockInfo(code='600869', name='远东股份', market='SH', industry='', start_pri=21.46, end_pri=22.9, highest_pri=22.9, lowest_pri=21.31, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 远东股份 步骤3失败：目标日涨停（22.90/20.82=1.0999 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600601', name='方正科技', market='SH', industry='', start_pri=12.42, end_pri=13.33, highest_pri=13.33, lowest_pri=12.4, date='2026-05-11'), DayStockInfo(code='600601', name='方正科技', market='SH', industry='', start_pri=13.85, end_pri=14.31, highest_pri=14.66, lowest_pri=13.85, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 方正科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600683', name='京投发展', market='SH', industry='', start_pri=18.95, end_pri=18.95, highest_pri=18.95, lowest_pri=18.3, date='2026-05-11'), DayStockInfo(code='600683', name='京投发展', market='SH', industry='', start_pri=20.8, end_pri=20.85, highest_pri=20.85, lowest_pri=18.39, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 京投发展 步骤3失败：目标日涨停（20.85/18.95=1.1003 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600545', name='卓郎智能', market='SH', industry='', start_pri=5.94, end_pri=6.06, highest_pri=6.06, lowest_pri=5.8, date='2026-05-11'), DayStockInfo(code='600545', name='卓郎智能', market='SH', industry='', start_pri=6.09, end_pri=6.1, highest_pri=6.39, lowest_pri=5.51, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 1, 1
+2026-05-12 22:34:08 INFO: ❌ 卓郎智能 规则4失败：前7日出现跌停（2026-04-30, 5.43 -> 4.89）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='000922', name='佳电股份', market='SZ', industry='', start_pri=15.59, end_pri=17.08, highest_pri=17.08, lowest_pri=15.52, date='2026-05-11'), DayStockInfo(code='000922', name='佳电股份', market='SZ', industry='', start_pri=17.44, end_pri=16.59, highest_pri=17.46, lowest_pri=16.47, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 佳电股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603303', name='得邦照明', market='SH', industry='', start_pri=18.74, end_pri=20.61, highest_pri=20.61, lowest_pri=18.63, date='2026-05-11'), DayStockInfo(code='603303', name='得邦照明', market='SH', industry='', start_pri=20.81, end_pri=19.67, highest_pri=20.95, lowest_pri=19.64, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 得邦照明 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='001207', name='联科科技', market='SZ', industry='', start_pri=18.07, end_pri=19.84, highest_pri=19.84, lowest_pri=18.03, date='2026-05-11'), DayStockInfo(code='001207', name='联科科技', market='SZ', industry='', start_pri=20.0, end_pri=20.14, highest_pri=20.98, lowest_pri=19.88, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 联科科技 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002334', name='英威腾', market='SZ', industry='', start_pri=8.88, end_pri=9.15, highest_pri=9.15, lowest_pri=8.84, date='2026-05-11'), DayStockInfo(code='002334', name='英威腾', market='SZ', industry='', start_pri=9.06, end_pri=9.08, highest_pri=9.27, lowest_pri=8.98, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 英威腾 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600396', name='华电辽能', market='SH', industry='', start_pri=12.67, end_pri=13.68, highest_pri=13.68, lowest_pri=12.67, date='2026-05-11'), DayStockInfo(code='600396', name='华电辽能', market='SH', industry='', start_pri=14.0, end_pri=15.05, highest_pri=15.05, lowest_pri=12.93, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 华电辽能 步骤3失败：目标日涨停（15.05/13.68=1.1001 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600854', name='春兰股份', market='SH', industry='', start_pri=5.45, end_pri=5.96, highest_pri=5.96, lowest_pri=5.42, date='2026-05-11'), DayStockInfo(code='600854', name='春兰股份', market='SH', industry='', start_pri=5.96, end_pri=5.91, highest_pri=6.1, lowest_pri=5.7, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 春兰股份 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='600198', name='大唐电信', market='SH', industry='', start_pri=8.91, end_pri=9.72, highest_pri=9.72, lowest_pri=8.91, date='2026-05-11'), DayStockInfo(code='600198', name='大唐电信', market='SH', industry='', start_pri=10.09, end_pri=10.1, highest_pri=10.69, lowest_pri=9.98, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 6, 1
+2026-05-12 22:34:08 INFO: ❌ 大唐电信 规则5失败：前30个交易日内无涨停记录
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002030', name='达安基因', market='SZ', industry='', start_pri=6.89, end_pri=7.3, highest_pri=7.3, lowest_pri=6.5, date='2026-05-11'), DayStockInfo(code='002030', name='达安基因', market='SZ', industry='', start_pri=7.15, end_pri=6.88, highest_pri=7.79, lowest_pri=6.87, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: 6, 2
+2026-05-12 22:34:08 INFO: ❌ 达安基因 规则4失败：前7日出现连续涨停（2026-05-11, 6.64 -> 7.30）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='601991', name='大唐发电', market='SH', industry='', start_pri=6.0, end_pri=6.09, highest_pri=6.09, lowest_pri=5.88, date='2026-05-11'), DayStockInfo(code='601991', name='大唐发电', market='SH', industry='', start_pri=6.68, end_pri=6.7, highest_pri=6.7, lowest_pri=6.4, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: ❌ 大唐发电 步骤3失败：目标日涨停（6.70/6.09=1.1002 >= 1.0960）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='002640', name='跨境通', market='SZ', industry='', start_pri=4.1, end_pri=4.54, highest_pri=4.54, lowest_pri=4.08, date='2026-05-11'), DayStockInfo(code='002640', name='跨境通', market='SZ', industry='', start_pri=4.6, end_pri=4.33, highest_pri=4.61, lowest_pri=4.27, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 2, 1
+2026-05-12 22:34:08 INFO: 3, 2
+2026-05-12 22:34:08 INFO: ❌ 跨境通 规则4失败：前7日出现连续涨停（2026-05-06, 3.65 -> 4.02）
+2026-05-12 22:34:08 INFO: day_list_3: [DayStockInfo(code='603311', name='金海高科', market='SH', industry='', start_pri=23.1, end_pri=23.1, highest_pri=23.1, lowest_pri=23.1, date='2026-05-11'), DayStockInfo(code='603311', name='金海高科', market='SH', industry='', start_pri=23.1, end_pri=23.1, highest_pri=23.1, lowest_pri=23.1, date='2026-05-12')]
+2026-05-12 22:34:08 INFO: 5, 1
+2026-05-12 22:34:08 INFO: ✅ 金海高科 通过所有规则
+2026-05-12 22:34:08 INFO: ====== 筛选结果：共 92 只股票，通过 20 只，未通过 72 只 ======
+2026-05-12 22:34:08 INFO: base_date: 2026-05-08
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='688189', name='南新制药', market='IB', industry='', start_pri=9.0, end_pri=10.55, highest_pri=10.55, lowest_pri=9.0, date='2026-05-11'), DayStockInfo(code='688189', name='南新制药', market='IB', industry='', start_pri=10.55, end_pri=10.49, highest_pri=11.39, lowest_pri=10.12, date='2026-05-12')], length: 2
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='688551', name='科威尔', market='IB', industry='', start_pri=52.68, end_pri=60.46, highest_pri=60.46, lowest_pri=52.68, date='2026-05-11'), DayStockInfo(code='688551', name='科威尔', market='IB', industry='', start_pri=62.3, end_pri=62.4, highest_pri=63.5, lowest_pri=60.31, date='2026-05-12')], length: 2
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='688766', name='普冉股份', market='IB', industry='', start_pri=348.77, end_pri=381.0, highest_pri=381.0, lowest_pri=342.9, date='2026-05-11'), DayStockInfo(code='688766', name='普冉股份', market='IB', industry='', start_pri=388.23, end_pri=398.85, highest_pri=408.18, lowest_pri=377.0, date='2026-05-12')], length: 2
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='300302', name='同有科技', market='SZ', industry='', start_pri=32.5, end_pri=35.5, highest_pri=36.04, lowest_pri=32.5, date='2026-05-08'), DayStockInfo(code='300302', name='同有科技', market='SZ', industry='', start_pri=40.0, end_pri=42.6, highest_pri=42.6, lowest_pri=40.0, date='2026-05-11'), DayStockInfo(code='300302', name='同有科技', market='SZ', industry='', start_pri=44.61, end_pri=42.81, highest_pri=45.88, lowest_pri=42.53, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='301188', name='力诺药包', market='SZ', industry='', start_pri=26.07, end_pri=27.5, highest_pri=29.0, lowest_pri=25.72, date='2026-05-08'), DayStockInfo(code='301188', name='力诺药包', market='SZ', industry='', start_pri=27.5, end_pri=33.0, highest_pri=33.0, lowest_pri=27.5, date='2026-05-11'), DayStockInfo(code='301188', name='力诺药包', market='SZ', industry='', start_pri=34.04, end_pri=33.03, highest_pri=34.56, lowest_pri=32.41, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='300604', name='长川科技', market='SZ', industry='', start_pri=180.01, end_pri=182.01, highest_pri=187.5, lowest_pri=179.47, date='2026-05-08'), DayStockInfo(code='300604', name='长川科技', market='SZ', industry='', start_pri=186.0, end_pri=218.41, highest_pri=218.41, lowest_pri=183.98, date='2026-05-11'), DayStockInfo(code='300604', name='长川科技', market='SZ', industry='', start_pri=219.99, end_pri=213.08, highest_pri=220.0, lowest_pri=209.0, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='300616', name='尚品宅配', market='SZ', industry='', start_pri=14.5, end_pri=14.66, highest_pri=15.09, lowest_pri=14.26, date='2026-05-08'), DayStockInfo(code='300616', name='尚品宅配', market='SZ', industry='', start_pri=14.74, end_pri=17.59, highest_pri=17.59, lowest_pri=14.34, date='2026-05-11'), DayStockInfo(code='300616', name='尚品宅配', market='SZ', industry='', start_pri=17.6, end_pri=16.6, highest_pri=17.6, lowest_pri=16.4, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='605189', name='富春染织', market='SH', industry='', start_pri=18.99, end_pri=19.97, highest_pri=19.97, lowest_pri=18.62, date='2026-05-11'), DayStockInfo(code='605189', name='富春染织', market='SH', industry='', start_pri=19.97, end_pri=19.45, highest_pri=20.81, lowest_pri=19.02, date='2026-05-12')], length: 2
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='002971', name='和远气体', market='SZ', industry='', start_pri=31.2, end_pri=31.15, highest_pri=31.58, lowest_pri=30.78, date='2026-05-08'), DayStockInfo(code='002971', name='和远气体', market='SZ', industry='', start_pri=31.16, end_pri=34.27, highest_pri=34.27, lowest_pri=31.16, date='2026-05-11'), DayStockInfo(code='002971', name='和远气体', market='SZ', industry='', start_pri=34.61, end_pri=33.12, highest_pri=35.4, lowest_pri=32.93, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='600330', name='天通股份', market='SH', industry='', start_pri=27.8, end_pri=29.16, highest_pri=30.19, lowest_pri=27.51, date='2026-05-08'), DayStockInfo(code='600330', name='天通股份', market='SH', industry='', start_pri=30.0, end_pri=32.08, highest_pri=32.08, lowest_pri=29.3, date='2026-05-11'), DayStockInfo(code='600330', name='天通股份', market='SH', industry='', start_pri=33.97, end_pri=32.66, highest_pri=34.0, lowest_pri=31.03, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='603936', name='博敏电子', market='SH', industry='', start_pri=17.96, end_pri=18.38, highest_pri=18.54, lowest_pri=17.3, date='2026-05-08'), DayStockInfo(code='603936', name='博敏电子', market='SH', industry='', start_pri=19.0, end_pri=20.22, highest_pri=20.22, lowest_pri=18.49, date='2026-05-11'), DayStockInfo(code='603936', name='博敏电子', market='SH', industry='', start_pri=20.3, end_pri=20.22, highest_pri=20.96, lowest_pri=20.01, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='603757', name='大元泵业', market='SH', industry='', start_pri=53.01, end_pri=54.95, highest_pri=56.4, lowest_pri=52.16, date='2026-05-08'), DayStockInfo(code='603757', name='大元泵业', market='SH', industry='', start_pri=57.12, end_pri=60.45, highest_pri=60.45, lowest_pri=57.1, date='2026-05-11'), DayStockInfo(code='603757', name='大元泵业', market='SH', industry='', start_pri=62.0, end_pri=60.52, highest_pri=63.0, lowest_pri=58.3, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='000811', name='冰轮环境', market='SZ', industry='', start_pri=25.71, end_pri=26.28, highest_pri=26.8, lowest_pri=25.13, date='2026-05-08'), DayStockInfo(code='000811', name='冰轮环境', market='SZ', industry='', start_pri=27.5, end_pri=28.91, highest_pri=28.91, lowest_pri=27.16, date='2026-05-11'), DayStockInfo(code='000811', name='冰轮环境', market='SZ', industry='', start_pri=29.2, end_pri=28.91, highest_pri=30.15, lowest_pri=28.4, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='603773', name='沃格光电', market='SH', industry='', start_pri=66.3, end_pri=72.75, highest_pri=74.0, lowest_pri=65.0, date='2026-05-08'), DayStockInfo(code='603773', name='沃格光电', market='SH', industry='', start_pri=74.08, end_pri=80.03, highest_pri=80.03, lowest_pri=73.67, date='2026-05-11'), DayStockInfo(code='603773', name='沃格光电', market='SH', industry='', start_pri=82.18, end_pri=81.76, highest_pri=86.03, lowest_pri=78.0, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='002008', name='大族激光', market='SZ', industry='', start_pri=115.4, end_pri=122.06, highest_pri=122.92, lowest_pri=112.2, date='2026-05-08'), DayStockInfo(code='002008', name='大族激光', market='SZ', industry='', start_pri=124.5, end_pri=134.27, highest_pri=134.27, lowest_pri=124.5, date='2026-05-11'), DayStockInfo(code='002008', name='大族激光', market='SZ', industry='', start_pri=134.2, end_pri=134.66, highest_pri=139.82, lowest_pri=128.28, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='600184', name='光电股份', market='SH', industry='', start_pri=23.96, end_pri=24.8, highest_pri=24.84, lowest_pri=23.25, date='2026-05-08'), DayStockInfo(code='600184', name='光电股份', market='SH', industry='', start_pri=26.07, end_pri=27.28, highest_pri=27.28, lowest_pri=26.05, date='2026-05-11'), DayStockInfo(code='600184', name='光电股份', market='SH', industry='', start_pri=29.99, end_pri=29.08, highest_pri=29.99, lowest_pri=27.83, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='001389', name='广合科技', market='SZ', industry='', start_pri=177.08, end_pri=173.0, highest_pri=178.87, lowest_pri=172.13, date='2026-05-08'), DayStockInfo(code='001389', name='广合科技', market='SZ', industry='', start_pri=177.77, end_pri=190.3, highest_pri=190.3, lowest_pri=177.77, date='2026-05-11'), DayStockInfo(code='001389', name='广合科技', market='SZ', industry='', start_pri=194.3, end_pri=190.68, highest_pri=194.95, lowest_pri=185.88, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='002718', name='友邦吊顶', market='SZ', industry='', start_pri=69.32, end_pri=71.32, highest_pri=72.0, lowest_pri=68.52, date='2026-05-08'), DayStockInfo(code='002718', name='友邦吊顶', market='SZ', industry='', start_pri=70.59, end_pri=78.45, highest_pri=78.45, lowest_pri=70.32, date='2026-05-11'), DayStockInfo(code='002718', name='友邦吊顶', market='SZ', industry='', start_pri=82.51, end_pri=81.12, highest_pri=83.5, lowest_pri=79.3, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='000062', name='深圳华强', market='SZ', industry='', start_pri=36.05, end_pri=35.54, highest_pri=36.36, lowest_pri=35.2, date='2026-05-08'), DayStockInfo(code='000062', name='深圳华强', market='SZ', industry='', start_pri=36.19, end_pri=39.09, highest_pri=39.09, lowest_pri=36.19, date='2026-05-11'), DayStockInfo(code='000062', name='深圳华强', market='SZ', industry='', start_pri=39.5, end_pri=37.39, highest_pri=39.5, lowest_pri=37.0, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: day_list: [DayStockInfo(code='603311', name='金海高科', market='SH', industry='', start_pri=20.91, end_pri=23.1, highest_pri=23.1, lowest_pri=20.69, date='2026-05-08'), DayStockInfo(code='603311', name='金海高科', market='SH', industry='', start_pri=23.1, end_pri=23.1, highest_pri=23.1, lowest_pri=23.1, date='2026-05-11'), DayStockInfo(code='603311', name='金海高科', market='SH', industry='', start_pri=23.1, end_pri=23.1, highest_pri=23.1, lowest_pri=23.1, date='2026-05-12')], length: 3
+2026-05-12 22:34:08 INFO: 2026-05-12 入库完成：zt_stock 20 条，stock_n 16 条。
+2026-05-12 22:34:08 INFO: API 调用统计: get_zt_stock_list=0 次, get_day_detail=0 次
+2026-05-12 22:34:08 INFO: ============================================================
+2026-05-12 22:34:08 INFO: 筛选完成，日志文件: D:\code\stock-n\backend\log\2026-05-12.log
+2026-05-12 22:34:08 INFO: ============================================================
