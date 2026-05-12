@@ -223,6 +223,7 @@ async def get_day_data_cached(
     code: str, name: str, start_yyyymmdd: str, end_yyyymmdd: str,
     min_records: int = 2
 ) -> list[DayStockInfo]:
+#TODO 这里拿start-end的数据逻辑有问题，并且这里的传参也有问题，外面将YYYY--MM-DD转成 YYYYMMDD传进来，这里又转成YYYY-MM-DD 多次一举了
     """
     获取股票日线数据，优先从 day_stock 表读取，数据库没有或数据不足则调 API 并保存。
     注意：数据库中 trade_date 存储为 'YYYY-MM-DD' 格式，但查询参数是 'YYYYMMDD'，需转换
@@ -300,6 +301,7 @@ async def check_stock_all_rules(
 
     # 步骤3：获取目标日日线数据，检查目标日未涨停未跌停
     day_list_3 = await get_day_data_cached(stock.code, stock.name, prev_yyyymmdd, target_yyyymmdd)
+    logger.info("day_list_3: %s", day_list_3)
     if len(day_list_3) < 2:
         logger.info("❌ %s 步骤3失败：日线数据不足2条（prev=%s, target=%s）", stock.name, prev_yyyymmdd, target_yyyymmdd)
         return False
@@ -341,6 +343,7 @@ async def check_stock_all_rules(
             break
         if _is_zt(prev_pri, curr_pri):
             consecutive_zt += 1
+            logger.info("%d, %d", i, consecutive_zt)
             if consecutive_zt >= 2:
                 logger.info("❌ %s 规则4失败：前7日出现连续涨停（%s, %.2f -> %.2f）", stock.name, check_days[i].date, prev_pri, curr_pri)
                 break
@@ -400,14 +403,15 @@ async def save_stock_n(
 ) -> int:
     """获取日线详情，构造 StockNInfo，写入 stock_n 表"""
     # 获取 target_date 前第二个交易日作为 base_price 参考日
-    base_date = await _get_n_prev_workday(target_date, 2)
+    base_date = await _get_n_prev_workday(target_date, 3)
+    logger.info("base_date: %s", base_date)
     base_yyyymmdd = base_date.replace('-', '')
-    prev_yyyymmdd = prev_workday.replace('-', '')
     target_yyyymmdd = target_date.replace('-', '')
 
     stock_n_list: list[StockNInfo] = []
     for stock in stocks:
         day_list = await get_day_data_cached(stock.code, stock.name, base_yyyymmdd, target_yyyymmdd)
+        logger.info("day_list: %s, length: %d", day_list, len(day_list))
         if len(day_list) < 2:
             continue
 

@@ -20,7 +20,7 @@ from src.vo.stock import ZtStockInfo, DayStockInfo
 logger = logging.getLogger(__name__)
 
 # 涨停阈值：收盘价较前日涨幅 >= 9.5% 视为涨停（主板约10%，科创板/创业板约20%用更高阈值）
-ZT_THRESHOLD = 1.10
+ZT_THRESHOLD = 1.096
 # 跌停阈值
 DT_THRESHOLD = 0.905
 # 涨停涨幅百分比（与 ZT_THRESHOLD 一致）

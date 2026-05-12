@@ -53,6 +53,7 @@ def _init_mysql_engine() -> None:
 
     _engine = create_async_engine(
         dsn,
+        connect_args={"server_public_key": True},
         pool_pre_ping=True,
         pool_recycle=3600,
     )

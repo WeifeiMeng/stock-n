@@ -134,11 +134,20 @@ class DayStockDAO:
     async def list_by_codes_and_date_range(
         session: AsyncSession, codes: list[str], start_date: str, end_date: str
     ) -> List[DayStockEntity]:
-        """根据股票代码列表和日期范围查询多条记录"""
+        """根据股票代码列表和日期范围查询多条记录，按 (code, trade_date) 去重"""
         stmt = select(DayStockEntity).where(
             DayStockEntity.code.in_(codes),
             DayStockEntity.trade_date >= start_date,
             DayStockEntity.trade_date <= end_date,
         ).order_by(DayStockEntity.trade_date)
         result = await session.execute(stmt)
-        return list(result.scalars().all())
+        rows = list(result.scalars().all())
+        # 按 (code, trade_date) 去重，保留最后一条
+        seen: set[tuple[str, str]] = set()
+        deduped: list[DayStockEntity] = []
+        for row in rows:
+            key = (row.code, row.trade_date)
+            if key not in seen:
+                seen.add(key)
+                deduped.append(row)
+        return deduped

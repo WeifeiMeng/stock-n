@@ -120,6 +120,7 @@ class StockNDAO:
                 session, resolved_trade_date, limit
             )
 
+#TODO 这里返回的结果需要按照股票代码进行去重 防止脏数据污染
     @staticmethod
     async def _list_by_trade_date_with_session(
         session: AsyncSession, trade_date: str, limit: int
@@ -131,7 +132,15 @@ class StockNDAO:
             .limit(limit)
         )
         result = await session.execute(stmt)
-        return list(result.scalars().all())
+        rows = list(result.scalars().all())
+        # 按 code 去重，保留第一条（n 值最高的那条）
+        seen: set[str] = set()
+        deduped: list[StockNEntity] = []
+        for row in rows:
+            if row.code not in seen:
+                seen.add(row.code)
+                deduped.append(row)
+        return deduped
 
     @staticmethod
     async def list_by_code(
