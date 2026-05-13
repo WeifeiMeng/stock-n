@@ -223,22 +223,17 @@ async def get_day_data_cached(
     code: str, name: str, start_yyyymmdd: str, end_yyyymmdd: str,
     min_records: int = 2
 ) -> list[DayStockInfo]:
-#TODO 这里拿start-end的数据逻辑有问题，并且这里的传参也有问题，外面将YYYY--MM-DD转成 YYYYMMDD传进来，这里又转成YYYY-MM-DD 多次一举了
     """
     获取股票日线数据，优先从 day_stock 表读取，数据库没有或数据不足则调 API 并保存。
-    注意：数据库中 trade_date 存储为 'YYYY-MM-DD' 格式，但查询参数是 'YYYYMMDD'，需转换
     如果 API 返回空，则返回空列表
 
     min_records: 期望的最小记录数，默认 2。如果 DB 中符合日期范围的记录少于这个数，会调 API 补充。
     """
-    # 将 'YYYYMMDD' 格式转换为 'YYYY-MM-DD' 格式用于数据库查询
-    start_date_fmt = f"{start_yyyymmdd[:4]}-{start_yyyymmdd[4:6]}-{start_yyyymmdd[6:8]}"
-    end_date_fmt = f"{end_yyyymmdd[:4]}-{end_yyyymmdd[4:6]}-{end_yyyymmdd[6:8]}"
 
     session_factory = get_session_factory()
     async with session_factory() as session:
         db_days = await DayStockDAO.list_by_codes_and_date_range(
-            session, [code], start_date_fmt, end_date_fmt
+            session, [code], start_yyyymmdd, end_yyyymmdd
         )
 
     # 转换为 DayStockInfo
@@ -403,14 +398,12 @@ async def save_stock_n(
 ) -> int:
     """获取日线详情，构造 StockNInfo，写入 stock_n 表"""
     # 获取 target_date 前第二个交易日作为 base_price 参考日
-    base_date = await _get_n_prev_workday(target_date, 3)
+    base_date = await _get_n_prev_workday(target_date, 2)
     logger.info("base_date: %s", base_date)
-    base_yyyymmdd = base_date.replace('-', '')
-    target_yyyymmdd = target_date.replace('-', '')
 
     stock_n_list: list[StockNInfo] = []
     for stock in stocks:
-        day_list = await get_day_data_cached(stock.code, stock.name, base_yyyymmdd, target_yyyymmdd)
+        day_list = await get_day_data_cached(stock.code, stock.name, base_date, target_date)
         logger.info("day_list: %s, length: %d", day_list, len(day_list))
         if len(day_list) < 2:
             continue
