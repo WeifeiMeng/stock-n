@@ -2,12 +2,12 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.stable
+    image: stock-calculator-backend:latest
     container_name: stock-calculator-backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env.production
     environment:
       - PYTHONUNBUFFERED=1
     healthcheck:
@@ -18,20 +18,42 @@ services:
       start_period: 40s
     networks:
       - stock-network
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: stock-calculator-frontend:latest
     container_name: stock-calculator-frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       backend:
         condition: service_healthy
     networks:
       - stock-network
 
+  mysql:
+    image: mysql:8.0
+    container_name: stock-mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env.production
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pRoot@123456"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - stock-network
+
 networks:
   stock-network:
     driver: bridge
+
+volumes:
+  mysql_data:

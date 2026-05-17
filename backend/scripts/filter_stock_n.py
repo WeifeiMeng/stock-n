@@ -21,6 +21,15 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env.local"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k, _v)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -118,6 +127,11 @@ def _parse_args() -> argparse.Namespace:
         "--date",
         required=False,
         help="目标交易日期，格式 YYYY-MM-DD，默认今天",
+    )
+    parser.add_argument(
+        "--zt-date",
+        required=False,
+        help="涨停日期（前一交易日），格式 YYYY-MM-DD，默认自动计算",
     )
     return parser.parse_args()
 
@@ -459,7 +473,7 @@ async def save_stock_n(
 # ----------------------------------------------------------------------
 # 主流程
 # ----------------------------------------------------------------------
-async def _run(target_date: str) -> None:
+async def _run(target_date: str, zt_date: str = None) -> None:
     try:
         await init_all_tables()
 
@@ -469,9 +483,15 @@ async def _run(target_date: str) -> None:
                 "MySQL 未配置，请设置 MYSQL_DSN 或 MYSQL_HOST/MYSQL_USER/MYSQL_PASSWORD/MYSQL_DATABASE。"
             )
 
-        # Step 1: 前一交易日（涨停日）
-        prev_workday = _get_prev_workday(target_date)
-        logger.info(f"目标日期: {target_date}，前一交易日(涨停日): {prev_workday}")
+        # Step 1: 确定涨停日期
+        if zt_date:
+            # 使用用户指定的涨停日期
+            prev_workday = zt_date
+            logger.info(f"目标日期: {target_date}，指定的涨停日: {prev_workday}")
+        else:
+            # 自动计算前一交易日（涨停日）
+            prev_workday = _get_prev_workday(target_date)
+            logger.info(f"目标日期: {target_date}，前一交易日(涨停日): {prev_workday}")
 
         # Step 2: 从 API 拉取并写入 zt_stock 表
         zt_list = await fetch_and_save_zt_stocks(prev_workday)
@@ -498,14 +518,17 @@ async def _run(target_date: str) -> None:
 def main() -> None:
     args = _parse_args()
     target_date = _resolve_date(args.date)
+    zt_date = args.zt_date  # 获取用户指定的涨停日期
 
     # 设置文件日志（覆盖同日期旧日志）
     log_path = setup_file_logging(target_date)
     logger.info("=" * 60)
     logger.info("N 规则筛选启动 - 目标日期: %s", target_date)
+    if zt_date:
+        logger.info("指定涨停日期: %s", zt_date)
     logger.info("=" * 60)
 
-    asyncio.run(_run(target_date))
+    asyncio.run(_run(target_date, zt_date))
 
     logger.info("=" * 60)
     logger.info("筛选完成，日志文件: %s", log_path)

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 from typing import AsyncGenerator
+from urllib.parse import quote_plus
 
 from fastapi import Request
 from sqlalchemy.ext.asyncio import (
@@ -36,7 +37,10 @@ def _build_mysql_dsn() -> str | None:
     if not all([host, user, password, database]):
         return None
 
-    return f"mysql+aiomysql://{user}:{password}@{host}:{port}/{database}"
+    encoded_user = quote_plus(user)
+    encoded_password = quote_plus(password)
+    encoded_database = quote_plus(database)
+    return f"mysql+aiomysql://{encoded_user}:{encoded_password}@{host}:{port}/{encoded_database}"
 
 
 def _init_mysql_engine() -> None:

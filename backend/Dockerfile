@@ -24,6 +24,7 @@ RUN uv sync --frozen -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 复制应用代码
 COPY main.py ./
+COPY src ./src
 
 # 暴露端口
 EXPOSE 8000
