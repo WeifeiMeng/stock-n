@@ -61,6 +61,7 @@ class ZhituApiClient:
             self._client = None
 
     async def get_zt_stock_list(self, date: str) -> List[ZtStockInfo]:
+        await asyncio.sleep(REQUEST_INTERVAL)
         client = await self._get_client()
         for attempt in range(len(TOKENS) + 1):
             token = _get_current_token()
@@ -69,8 +70,9 @@ class ZhituApiClient:
                 resp = await client.get(url)
                 if resp.status_code == 429:
                     _mark_token_failed()
-                    _rotate_token()
-                    await asyncio.sleep(2 ** attempt * 0.5)
+                    if attempt < len(TOKENS):
+                        _rotate_token()
+                        await asyncio.sleep(2 ** attempt * 0.5)
                     continue
                 resp.raise_for_status()
                 data = resp.json()
@@ -89,15 +91,17 @@ class ZhituApiClient:
                     return result
                 elif isinstance(data, dict) and data.get('code') == -404:
                     _mark_token_failed()
-                    _rotate_token()
-                    await asyncio.sleep(2 ** attempt * 0.5)
+                    if attempt < len(TOKENS):
+                        _rotate_token()
+                        await asyncio.sleep(2 ** attempt * 0.5)
                     continue
                 else:
                     return []
             except httpx.HTTPError as e:
                 logger.warning("API request failed %s: %s", url, e)
-                _rotate_token()
-                await asyncio.sleep(2 ** attempt * 0.5)
+                if attempt < len(TOKENS):
+                    _rotate_token()
+                    await asyncio.sleep(2 ** attempt * 0.5)
         _failed_tokens.clear()
         return []
 
@@ -112,8 +116,9 @@ class ZhituApiClient:
                 resp = await client.get(url)
                 if resp.status_code == 429:
                     _mark_token_failed()
-                    _rotate_token()
-                    await asyncio.sleep(2 ** attempt * 0.5)
+                    if attempt < len(TOKENS):
+                        _rotate_token()
+                        await asyncio.sleep(2 ** attempt * 0.5)
                     continue
                 resp.raise_for_status()
                 data = resp.json()
@@ -137,7 +142,8 @@ class ZhituApiClient:
                     return []
             except httpx.HTTPError as e:
                 logger.warning("API request failed %s: %s", url, e)
-                _rotate_token()
-                await asyncio.sleep(2 ** attempt * 0.5)
+                if attempt < len(TOKENS):
+                    _rotate_token()
+                    await asyncio.sleep(2 ** attempt * 0.5)
         _failed_tokens.clear()
         return []
