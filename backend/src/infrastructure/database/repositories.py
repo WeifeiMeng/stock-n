@@ -1,15 +1,17 @@
+"""数据仓库实现 —— 替代旧 DAO 层，session 始终显式注入"""
 from __future__ import annotations
-from typing import Iterable, List
+from typing import Iterable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo
 from .entities import ZtStockEntity, DayStockEntity, StockNEntity
+from .base import Base
 
 
 class ZtStockRepository:
     @staticmethod
-    async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> List[ZtStockEntity]:
+    async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> list[ZtStockEntity]:
         stmt = (
             select(ZtStockEntity)
             .where(ZtStockEntity.trade_date == trade_date)
@@ -40,7 +42,7 @@ class DayStockRepository:
     @staticmethod
     async def list_by_codes_and_date_range(
         session: AsyncSession, codes: list[str], start_date: str, end_date: str
-    ) -> List[DayStockEntity]:
+    ) -> list[DayStockEntity]:
         stmt = (
             select(DayStockEntity)
             .where(
@@ -81,7 +83,7 @@ class DayStockRepository:
 
 class StockNRepository:
     @staticmethod
-    async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> List[StockNEntity]:
+    async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> list[StockNEntity]:
         stmt = (
             select(StockNEntity)
             .where(StockNEntity.trade_date == trade_date)
@@ -117,12 +119,11 @@ class StockNRepository:
 
 
 async def init_all_tables() -> None:
+    """创建所有数据表（幂等，仅当引擎已配置时执行）"""
     from .connection import get_mysql_engine
     engine = get_mysql_engine()
     if engine is None:
         return
-    from .entities import ZtStockEntity, DayStockEntity, StockNEntity
-    from .base import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all, tables=[
             ZtStockEntity.__table__,
