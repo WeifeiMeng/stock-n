@@ -59,6 +59,24 @@ docker-compose down      # Stop services
 docker-compose logs -f   # View logs
 ```
 
+## Environment Variables
+
+MySQL 配置通过 `.env` / `.env.local` 文件或系统环境变量提供。
+
+```
+# backend/.env.example — 复制为 .env 或 .env.local 使用
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=123456
+MYSQL_DATABASE=stocks
+```
+
+优先级：系统环境变量 > `.env.local`（本地覆盖） > `.env`（默认值）
+
+- `.env` — 提交到 git，包含开发默认值
+- `.env.local` — 不提交，覆盖 `.env` 的值（`backend/.env.local` 已在 `.gitignore` 中）
+
 ## Frontend (stock-n.html)
 
 N 规则股票池页面，主要功能：

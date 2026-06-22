@@ -3,7 +3,7 @@ ARG BASE_REGISTRY=docker.io
 FROM ${BASE_REGISTRY}/library/nginx:alpine
 
 # 复制前端文件到 Nginx 的默认静态文件目录
-COPY index.html /usr/share/nginx/html/
+COPY index.html stock-n.html /usr/share/nginx/html/
 
 # 创建自定义 Nginx 配置文件以处理 SPA 和 API 代理
 RUN echo 'server { \
@@ -18,12 +18,29 @@ RUN echo 'server { \
     } \
     \
     # API 代理到后端 \
-    location /api/ { \
-        proxy_pass http://backend:8000/; \
+    location /health { \
+        proxy_pass http://backend:8000/health; \
         proxy_set_header Host $host; \
         proxy_set_header X-Real-IP $remote_addr; \
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
         proxy_set_header X-Forwarded-Proto $scheme; \
+    } \
+    \
+    location /calculate { \
+        proxy_pass http://backend:8000/calculate; \
+        proxy_set_header Host $host; \
+        proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $scheme; \
+    } \
+    \
+    location /stock-n/ { \
+        proxy_pass http://backend:8000/stock-n/; \
+        proxy_set_header Host $host; \
+        proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $scheme; \
+        proxy_read_timeout 600s; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 

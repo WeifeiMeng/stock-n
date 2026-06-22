@@ -1,3 +1,7 @@
 *.tar
 backend.tar
 frontend.tar
+
+# Local env overrides
+.env.local
+backend/.env.local

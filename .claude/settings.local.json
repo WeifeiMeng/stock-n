@@ -6,7 +6,12 @@
       "Bash(powershell -Command \"& 'd:/code/stock-n/backend/.venv/Scripts/Activate.ps1'\")",
       "Bash(. d:/code/stock-n/backend/.venv/Scripts/activate)",
       "Bash(python -m py_compile d:/code/stock-n/backend/scripts/filter_stock_n.py)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(docker compose:*)",
+      "Bash(uv run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(uv sync:*)"
     ]
   }
 }
