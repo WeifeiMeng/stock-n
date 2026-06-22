@@ -11,7 +11,9 @@
       "Bash(uv run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(taskkill //F //IM uvicorn.exe)",
+      "Bash(taskkill //F //IM python.exe)"
     ]
   }
 }

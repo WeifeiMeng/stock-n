@@ -5,3 +5,11 @@ frontend.tar
 # Local env overrides
 .env.local
 backend/.env.local
+backend/.env
+
+# Logs
+*.log
+backend/log/
+
+# Crash dumps
+*.stackdump
