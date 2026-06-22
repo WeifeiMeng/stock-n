@@ -189,16 +189,20 @@ async def run_full_pipeline(
 
     # Step 1-2: 获取涨停股票，优先DB→API
     zt_stocks = await repo.get_zt_stocks(prev_workday)
-    if not zt_stocks:
+    if zt_stocks:
+        # DB 数据已在保存时过滤过，无需再过滤
+        result.zt_total = len(zt_stocks)
+    else:
         zt_stocks = await api.get_zt_stock_list(prev_workday)
         if not zt_stocks:
             logger.info("无涨停数据")
             return result
-        await repo.save_zt_stocks(zt_stocks, prev_workday)
-
-    zt_stocks = filter_st_bj(zt_stocks)
-    result.zt_total = len(zt_stocks)
-    logger.info("涨停股票: %d 只(去ST/北交所后)", len(zt_stocks))
+        # 过滤后保存到 DB
+        zt_stocks = filter_st_bj(zt_stocks)
+        result.zt_total = len(zt_stocks)
+        if zt_stocks:
+            await repo.save_zt_stocks(zt_stocks, prev_workday)
+        logger.info("涨停股票: %d 只(去ST/北交所后)", len(zt_stocks))
 
     # Step 3-5: 规则筛选
     passed, rejected = await filter_stocks_by_all_rules(zt_stocks, prev_workday, target_date, provider)
