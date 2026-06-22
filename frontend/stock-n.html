@@ -1022,7 +1022,11 @@
 
             try {
                 const baseUrl = getApiUrl();
-                const response = await fetch(`${baseUrl}/stock-n/run-filter/${date}`, { method: 'POST' });
+                const response = await fetch(`${baseUrl}/stock-n/filter`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: date }),
+                });
 
                 if (!response.ok) {
                     const err = await response.json();
