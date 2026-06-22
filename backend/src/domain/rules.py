@@ -1,6 +1,10 @@
 from __future__ import annotations
 from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING
 import chinese_calendar
+
+if TYPE_CHECKING:
+    from .model import ZtStockInfo
 
 # Bug fix #4: ZT_THRESHOLD changed from 1.096 to 1.095 (true 9.5%), removed +0.01 hack
 ZT_THRESHOLD = 1.095
@@ -28,7 +32,7 @@ def get_prev_workday(date: str) -> str:
 
 
 def get_n_prev_workday(date: str, n: int) -> str:
-    """获取 date 的前 n 个工作日（UTC+8，跳过节假日）"""
+    """返回 date 之前第 n 个工作日（UTC+8，跳过节假日），非列表"""
     dt = datetime.strptime(date, '%Y-%m-%d').replace(tzinfo=timezone(timedelta(hours=8)))
     prev = dt - timedelta(days=1)
     count = 0
@@ -57,7 +61,7 @@ def is_zt(prev_end_pri: float, curr_end_pri: float) -> bool:
 
 
 def is_dt(prev_end_pri: float, curr_end_pri: float) -> bool:
-    """判断当日收盘价较前日跌幅 >= 9.5%（显式化 curr<=0 检查，与 is_zt 对称）"""
+    """判断当日收盘价较前日跌幅 >= 9.5%（curr<=0 视为跌停）"""
     if prev_end_pri <= 0:
         return False
     if curr_end_pri <= 0:
@@ -67,7 +71,7 @@ def is_dt(prev_end_pri: float, curr_end_pri: float) -> bool:
 
 # ---- filter helpers ----
 
-def filter_st_bj(stocks: list) -> list:
+def filter_st_bj(stocks: list[ZtStockInfo]) -> list[ZtStockInfo]:
     """过滤 ST/*ST/北交所股票"""
     result = []
     for s in stocks:
