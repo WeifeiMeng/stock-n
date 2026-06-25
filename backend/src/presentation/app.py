@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import root, health_check, run_filter, get_stock_n_list, calculate_price
+from .routes import root, health_check, run_filter, run_filter_stream, get_stock_n_list, calculate_price
 from .models import FilterRequest, FilterResponse, StockNItem
 from src.infrastructure.database.repositories import init_all_tables
 from src.infrastructure.database.connection import close_mysql_engine
@@ -32,5 +32,6 @@ async def shutdown():
 app.get("/")(root)
 app.get("/health")(health_check)
 app.post("/stock-n/filter", response_model=FilterResponse)(run_filter)
+app.get("/stock-n/filter/stream")(run_filter_stream)
 app.get("/stock-n/{date}", response_model=list[StockNItem])(get_stock_n_list)
 app.get("/calculate-price")(calculate_price)

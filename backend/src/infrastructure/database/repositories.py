@@ -83,6 +83,13 @@ class DayStockRepository:
 
 class StockNRepository:
     @staticmethod
+    async def delete_by_trade_date(session: AsyncSession, trade_date: str) -> int:
+        from sqlalchemy import delete as sa_delete
+        stmt = sa_delete(StockNEntity).where(StockNEntity.trade_date == trade_date)
+        result = await session.execute(stmt)
+        return result.rowcount
+
+    @staticmethod
     async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> list[StockNEntity]:
         stmt = (
             select(StockNEntity)

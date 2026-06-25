@@ -1,8 +1,9 @@
 """N规则筛选应用服务，合并 filter_stock_n.py + n_calculate.py，修复全部 bug"""
 from __future__ import annotations
+import json
 import logging
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, AsyncGenerator
 
 from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo
 from src.domain.rules import (
@@ -71,7 +72,7 @@ async def check_stock_all_rules(
     if ratio_3 <= DT_THRESHOLD:
         return FilterResultItem(stock, False, f"步骤3: 目标日跌停({ratio_3:.4f} <= {DT_THRESHOLD})")
 
-    # ---- Rule 4: 涨停前7交易日无跌停、无连续涨停 ----
+    # ---- Rule 4: 涨停前7交易日规则（无跌停、无连续涨停、至少有另一个涨停） ----
     rule4_start = get_n_prev_workday(target_date, 14)
     rule4_start_yy = rule4_start.replace('-', '')
     day_list_4 = await _get_day_data_cached(
@@ -79,12 +80,13 @@ async def check_stock_all_rules(
     )
     if len(day_list_4) < 10:
         return FilterResultItem(stock, False, f"规则4: 数据不足(需>=10, 实际{len(day_list_4)})")
-    # Bug fix #2: [-10:-2] 不包含涨停日，正确取7个交易日前
-    check_days = day_list_4[-10:-2]
-    if len(check_days) != 8:
-        return FilterResultItem(stock, False, f"规则4: 前7交易日数据不足(需8, 实际{len(check_days)})")
+    # check_days: [0]=8天前基准, [1]~[7]=前7交易日, [8]=涨停日
+    check_days = day_list_4[-10:-1]
+    if len(check_days) != 9:
+        return FilterResultItem(stock, False, f"规则4: 前7交易日数据不足(需9, 实际{len(check_days)})")
 
     consecutive_zt = 0
+    has_zt = False  # 窗口内是否有涨停（不含涨停日自身）
     for i in range(1, len(check_days)):
         prev_pri = check_days[i - 1].end_pri
         curr_pri = check_days[i].end_pri
@@ -96,25 +98,16 @@ async def check_stock_all_rules(
             consecutive_zt += 1
             if consecutive_zt >= 2:
                 return FilterResultItem(stock, False, f"规则4: 前7日连续涨停({check_days[i].date})")
+            # i == len-1 是涨停日本身，不计入窗口内涨停
+            if i < len(check_days) - 1:
+                has_zt = True
         else:
             consecutive_zt = 0
 
-    # ---- Rule 5: 涨停前30交易日有涨停记录 ----
-    rule5_start = get_n_prev_workday(prev_workday, 35)
-    rule5_start_yy = rule5_start.replace('-', '')
-    day_list_5 = await _get_day_data_cached(stock.code, stock.name, rule5_start_yy, prev_yy, provider)
-    if len(day_list_5) < 2:
-        return FilterResultItem(stock, False, "规则5: 历史数据不足")
-    # Bug fix #1: [-31:-1] instead of [-25:-2], [:-1] instead of [:-2]
-    pre_days = day_list_5[-31:-1] if len(day_list_5) >= 31 else day_list_5[:-1]
-    if len(pre_days) < 2:
-        return FilterResultItem(stock, False, "规则5: 前30日数据不足")
+    if not has_zt:
+        return FilterResultItem(stock, False, "规则4: 前7日无涨停记录")
 
-    for i in range(1, len(pre_days)):
-        if is_zt(pre_days[i - 1].end_pri, pre_days[i].end_pri):
-            return FilterResultItem(stock, True, "")
-
-    return FilterResultItem(stock, False, "规则5: 前30日无涨停记录")
+    return FilterResultItem(stock, True, "")
 
 
 async def filter_stocks_by_all_rules(
@@ -173,6 +166,8 @@ async def save_stock_n_batch(
         ))
     if not stock_n_list:
         return 0
+    # 先删除该日期已有数据，再插入新结果
+    await repo.delete_stock_n_by_date(target_date)
     return await repo.save_stock_n_batch(stock_n_list)
 
 
@@ -215,3 +210,87 @@ async def run_full_pipeline(
         logger.info("入库 stock_n: %d 条", result.stock_n_inserted)
 
     return result
+
+
+def _sse_event(event_type: str, data: dict) -> str:
+    """将 dict 格式化为 SSE 事件字符串"""
+    payload = json.dumps(data, ensure_ascii=False)
+    return f"event: {event_type}\ndata: {payload}\n\n"
+
+
+async def run_full_pipeline_stream(
+    target_date: str,
+    api: ZtApiClient,
+    provider: DayDataProvider,
+    repo: StockRepository,
+) -> AsyncGenerator[str, None]:
+    """完整 N 规则筛选流程（SSE 流式版本），逐只推送进度事件"""
+    prev_workday = get_prev_workday(target_date)
+    logger.info("N规则筛选(SSE): 目标日=%s, 涨停日=%s", target_date, prev_workday)
+
+    # Step 1-2: 获取涨停股票
+    zt_stocks = await repo.get_zt_stocks(prev_workday)
+    if zt_stocks:
+        zt_total = len(zt_stocks)
+    else:
+        zt_stocks = await api.get_zt_stock_list(prev_workday)
+        if not zt_stocks:
+            yield _sse_event("complete", {
+                "type": "complete", "success": True,
+                "date": target_date, "prev_workday": prev_workday,
+                "zt_total": 0, "passed_count": 0, "rejected_count": 0,
+                "stock_n_inserted": 0, "rejected": [],
+            })
+            return
+        zt_stocks = filter_st_bj(zt_stocks)
+        zt_total = len(zt_stocks)
+        if zt_stocks:
+            await repo.save_zt_stocks(zt_stocks, prev_workday)
+        logger.info("涨停股票: %d 只(去ST/北交所后)", zt_total)
+
+    # Step 3-5: 逐只检查并推送进度
+    passed_list: list[ZtStockInfo] = []
+    rejected_list: list[FilterResultItem] = []
+    total = len(zt_stocks)
+
+    for idx, stock in enumerate(zt_stocks):
+        result = await check_stock_all_rules(stock, prev_workday, target_date, provider)
+        if result.passed:
+            passed_list.append(stock)
+        else:
+            rejected_list.append(result)
+
+        yield _sse_event("progress", {
+            "type": "progress",
+            "current": idx + 1,
+            "total": total,
+            "passed": len(passed_list),
+            "rejected": len(rejected_list),
+            "stock": {
+                "code": stock.code,
+                "name": stock.name,
+                "passed": result.passed,
+                "reason": result.reason if not result.passed else "",
+            },
+        })
+
+    logger.info("筛选结果: %d 只 → 通过 %d, 淘汰 %d", total, len(passed_list), len(rejected_list))
+
+    # Step 6: 入库
+    stock_n_inserted = 0
+    if passed_list:
+        stock_n_inserted = await save_stock_n_batch(passed_list, target_date, prev_workday, provider, repo)
+        logger.info("入库 stock_n: %d 条", stock_n_inserted)
+
+    yield _sse_event("complete", {
+        "type": "complete", "success": True,
+        "date": target_date, "prev_workday": prev_workday,
+        "zt_total": zt_total,
+        "passed_count": len(passed_list),
+        "rejected_count": len(rejected_list),
+        "stock_n_inserted": stock_n_inserted,
+        "rejected": [
+            f"{r.stock.name}({r.stock.code}): {r.reason}"
+            for r in rejected_list
+        ],
+    })

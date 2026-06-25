@@ -86,6 +86,16 @@ def get_stock_repository() -> StockRepository:
                 await session.commit()
             return count
 
+        async def delete_stock_n_by_date(self, trade_date: str):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return 0
+            async with sf() as session:
+                count = await StockNRepository.delete_by_trade_date(session, trade_date)
+                await session.commit()
+            return count
+
         async def save_stock_n_batch(self, stocks):
             from src.infrastructure.database.connection import get_session_factory
             sf = get_session_factory()

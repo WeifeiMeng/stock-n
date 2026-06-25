@@ -52,7 +52,7 @@ class ZhituApiClient:
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
+            self._client = httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=5.0))
         return self._client
 
     async def close(self) -> None:
@@ -109,7 +109,7 @@ class ZhituApiClient:
         await asyncio.sleep(REQUEST_INTERVAL)
         client = await self._get_client()
         market = get_market(code)
-        for attempt in range(len(TOKENS) + 1):
+        for attempt in range(min(len(TOKENS), 2)):
             token = _get_current_token()
             url = f"https://api.zhituapi.com/hs/history/{code}.{market}/d/n?token={token}&st={start_date}&et={end_date}&limit=30"
             try:

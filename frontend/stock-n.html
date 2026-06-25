@@ -278,14 +278,12 @@
             background: #1a1a2e;
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 0.82em;
-            line-height: 1.6;
-            color: #a0d2a0;
-            white-space: pre-wrap;
-            word-break: break-all;
+            line-height: 1.8;
+            color: #c0c0c0;
         }
 
         .filter-log.show {
@@ -294,10 +292,42 @@
 
         .filter-log .log-success {
             color: #6bcb77;
+            font-weight: 600;
+            font-size: 1.05em;
+            margin-bottom: 4px;
         }
 
         .filter-log .log-error {
             color: #ff6b6b;
+            font-weight: 600;
+            font-size: 1.05em;
+            margin-bottom: 4px;
+        }
+
+        .filter-log .log-meta {
+            color: #8ab4f8;
+            margin-bottom: 4px;
+        }
+
+        .filter-log .log-stat {
+            color: #e8eaed;
+            margin-bottom: 4px;
+        }
+
+        .filter-log .log-rejected {
+            color: #ff6b6b;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        .filter-log .log-rejected-list {
+            margin: 4px 0 0 0;
+            padding-left: 20px;
+            color: #e8a090;
+        }
+
+        .filter-log .log-rejected-list li {
+            margin-bottom: 2px;
         }
 
         /* Stats Bar */
@@ -778,6 +808,12 @@
         const dateInput = document.getElementById('dateInput');
         dateInput.value = getTodayStr();
 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function getApiUrl() {
             const port = window.location.port;
             if (port && port !== '80' && port !== '443') {
@@ -998,12 +1034,50 @@
         // Auto load when date changes
         dateInput.addEventListener('change', queryStockN);
 
+        const BTN_RUN_HTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    运行筛选
+                `;
+        const BTN_LOADING_HTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    筛选中...
+                `;
+
+        function parseSSEFrame(frame) {
+            const lines = frame.split('\n');
+            let eventType = 'message';
+            let dataStr = '';
+            for (const line of lines) {
+                if (line.startsWith('event: ')) {
+                    eventType = line.slice(7).trim();
+                } else if (line.startsWith('data: ')) {
+                    dataStr += line.slice(6);
+                } else if (line.startsWith('data:')) {
+                    dataStr += line.slice(5);
+                }
+            }
+            if (!dataStr) return null;
+            try {
+                return { event: eventType, data: JSON.parse(dataStr) };
+            } catch {
+                return null;
+            }
+        }
+
         async function runFilter() {
             const btn = document.getElementById('runFilterBtn');
             const logEl = document.getElementById('filterLog');
             const date = dateInput.value;
 
+            console.log('[runFilter] 按钮被点击, date:', date);
+
             if (!date) {
+                console.log('[runFilter] 日期为空，提前返回');
                 logEl.textContent = '请先选择日期';
                 logEl.classList.add('show');
                 return;
@@ -1011,59 +1085,99 @@
 
             btn.disabled = true;
             btn.classList.add('running');
-            btn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                筛选中...
-            `;
+            btn.innerHTML = BTN_LOADING_HTML;
             logEl.innerHTML = '';
             logEl.classList.add('show');
 
             try {
                 const baseUrl = getApiUrl();
-                const response = await fetch(`${baseUrl}/stock-n/filter`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: date }),
+                const url = `${baseUrl}/stock-n/filter/stream?date=${encodeURIComponent(date)}`;
+                console.log('[runFilter] SSE 连接:', url);
+
+                const response = await fetch(url, {
+                    headers: { 'Accept': 'text/event-stream' },
                 });
+                console.log('[runFilter] 响应状态:', response.status);
 
                 if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || '筛选请求失败');
+                    const errText = await response.text();
+                    throw new Error(errText || `HTTP ${response.status}`);
                 }
 
-                const result = await response.json();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let done = false;
 
-                // Show logs
-                let logText = '';
-                if (result.stdout) {
-                    logText += result.stdout;
-                }
-                if (result.stderr) {
-                    logText += '\n--- stderr ---\n' + result.stderr;
-                }
+                while (!done) {
+                    const { value, done: streamDone } = await reader.read();
+                    done = streamDone;
+                    if (value) {
+                        buffer += decoder.decode(value, { stream: true });
+                        const parts = buffer.split('\n\n');
+                        buffer = parts.pop();
 
-                if (result.success) {
-                    logEl.innerHTML = `<span class="log-success">✅ 筛选完成！${logText.split('\n').slice(-5).join('\n')}</span>`;
-                } else {
-                    logEl.innerHTML = `<span class="log-error">❌ 筛选失败\n\n${logText}</span>`;
+                        for (const part of parts) {
+                            if (!part.trim()) continue;
+                            const parsed = parseSSEFrame(part);
+                            if (!parsed) continue;
+
+                            if (parsed.event === 'progress') {
+                                const d = parsed.data;
+                                const icon = d.stock.passed ? '✅' : '❌';
+                                const reason = d.stock.passed ? '通过' : (d.stock.reason || '未通过');
+                                const line = document.createElement('div');
+                                line.textContent = `${icon} [${d.current}/${d.total}] ${d.stock.code} ${d.stock.name} - ${reason}`;
+                                if (d.stock.passed) {
+                                    line.style.color = '#6bcb77';
+                                } else {
+                                    line.style.color = '#e8a090';
+                                }
+                                logEl.appendChild(line);
+
+                                let summaryEl = document.getElementById('sseSummary');
+                                if (!summaryEl) {
+                                    summaryEl = document.createElement('div');
+                                    summaryEl.id = 'sseSummary';
+                                    summaryEl.style.cssText = 'color:#8ab4f8;font-weight:600;margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;';
+                                    logEl.appendChild(summaryEl);
+                                }
+                                summaryEl.textContent = `进度: ${d.current}/${d.total} | ✅通过 ${d.passed} | ❌淘汰 ${d.rejected}`;
+
+                            } else if (parsed.event === 'complete') {
+                                const d = parsed.data;
+                                console.log('[runFilter] 筛选完成:', d);
+
+                                let html = '';
+                                html += `<div class="log-success">✅ 筛选完成</div>`;
+                                html += `<div class="log-meta">目标日: ${d.date} | 涨停日: ${d.prev_workday}</div>`;
+                                html += `<div class="log-stat">涨停股票: ${d.zt_total} 只 → 通过: ${d.passed_count} 只 | 淘汰: ${d.rejected_count} 只</div>`;
+                                if (d.stock_n_inserted > 0) {
+                                    html += `<div class="log-stat">入库 stock_n: ${d.stock_n_inserted} 条</div>`;
+                                }
+                                if (d.rejected && d.rejected.length > 0) {
+                                    html += `<div class="log-rejected">淘汰明细 (${d.rejected.length} 条):</div>`;
+                                    html += `<ul class="log-rejected-list">`;
+                                    for (const r of d.rejected) {
+                                        html += `<li>${escapeHtml(r)}</li>`;
+                                    }
+                                    html += `</ul>`;
+                                }
+                                logEl.innerHTML = html;
+                            }
+                        }
+                    }
                 }
 
                 // Refresh stock list after filter completes
                 await queryStockN();
             } catch (err) {
-                logEl.innerHTML = `<span class="log-error">错误：${err.message}</span>`;
+                console.error('[runFilter] 异常:', err);
+                logEl.innerHTML = `<span class="log-error">错误：${escapeHtml(err.message)}</span>`;
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('running');
-                btn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    运行筛选
-                `;
+                btn.innerHTML = BTN_RUN_HTML;
             }
         }
     </script>

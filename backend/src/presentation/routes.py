@@ -1,6 +1,7 @@
 from fastapi import HTTPException
+from starlette.responses import StreamingResponse
 
-from src.application.filter_stock_n import run_full_pipeline
+from src.application.filter_stock_n import run_full_pipeline, run_full_pipeline_stream
 from src.application.price_calculate import calculate_stock_prices
 from .models import FilterRequest, FilterResponse, StockNItem
 from .deps import get_day_data_provider, get_api_client, get_stock_repository
@@ -39,6 +40,31 @@ async def run_filter(request: FilterRequest) -> FilterResponse:
     finally:
         if hasattr(api, 'close'):
             await api.close()
+
+
+async def run_filter_stream(date: str):
+    """执行 N 规则筛选，通过 SSE 实时推送进度"""
+    provider = get_day_data_provider()
+    api = get_api_client()
+    repo = get_stock_repository()
+
+    async def event_generator():
+        try:
+            async for sse_chunk in run_full_pipeline_stream(date, api, provider, repo):
+                yield sse_chunk
+        finally:
+            if hasattr(api, 'close'):
+                await api.close()
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 async def get_stock_n_list(date: str) -> list[StockNItem]:
