@@ -3,7 +3,7 @@ from starlette.responses import StreamingResponse
 
 from src.application.filter_stock_n import run_full_pipeline, run_full_pipeline_stream
 from src.application.price_calculate import calculate_stock_prices
-from .models import FilterRequest, FilterResponse, StockNItem
+from .models import CalculateRequest, FilterRequest, FilterResponse, StockNItem
 from .deps import get_day_data_provider, get_api_client, get_stock_repository
 
 
@@ -93,5 +93,25 @@ async def calculate_price(current_price: float):
         "levels": [
             {"level": l.level, "buy_price": l.buy_price, "stop_loss_price": l.stop_loss_price}
             for l in levels
+        ],
+    }
+
+
+async def calculate_price_compat(request: CalculateRequest):
+    """Compatibility endpoint for the legacy frontend page."""
+    levels = calculate_stock_prices(request.current_price)
+    return {
+        "current_price": request.current_price,
+        "buy_levels": [
+            {
+                "level": level.level,
+                "buy_price": level.buy_price,
+                "stop_loss_price": level.stop_loss_price,
+                "stop_loss_percentage": round(
+                    (level.buy_price - level.stop_loss_price) / level.buy_price * 100,
+                    1,
+                ),
+            }
+            for level in levels
         ],
     }

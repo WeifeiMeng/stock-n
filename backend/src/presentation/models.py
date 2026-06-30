@@ -21,3 +21,7 @@ class StockNItem(BaseModel):
     name: str
     current_price: float
     base_price: float
+
+
+class CalculateRequest(BaseModel):
+    current_price: float = Field(..., gt=0)
