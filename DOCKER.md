@@ -1,280 +1,314 @@
-# Docker 部署指南
+# Docker 部署说明
 
-本项目提供了完整的 Docker 支持，可以轻松地将整个应用打包成 Docker 镜像并运行。
+本文档说明如何把本项目的前端和后端构建成 Docker image，上传到服务器，并在服务器上启动。
 
-## 项目结构
+## 文件说明
 
+```text
+stock-n/
+  backend/Dockerfile          后端镜像构建文件
+  frontend/Dockerfile         前端镜像构建文件
+  frontend/package.json       前端 npm 项目配置，包含前端版本号
+  frontend/nginx.conf         前端 Nginx 配置，负责静态文件和 API 代理
+  docker-compose.yml          本地构建并启动
+  docker-compose.prod.yml     服务器使用已加载镜像启动
+  docker-build.sh             本地构建前后端镜像
+  docker-push.sh              本地导出镜像 tar 并上传服务器
 ```
-my-n/
-├── backend/
-│   ├── Dockerfile          # 后端 Dockerfile
-│   ├── main.py
-│   └── pyproject.toml
-├── frontend/
-│   ├── Dockerfile          # 前端 Dockerfile
-│   └── index.html
-├── docker-compose.yml      # Docker Compose 配置
-└── .dockerignore
-```
 
-## 快速开始
+## 前置条件
 
-### 方式一：使用 Docker Compose（推荐）
+本地机器需要安装并启动 Docker。Windows 上需要先启动 Docker Desktop。
 
-这是最简单的方式，可以一键启动整个应用：
+服务器需要安装 Docker 和 Docker Compose 插件：
 
 ```bash
-# 构建并启动所有服务
-docker-compose up --build
-
-# 或者在后台运行
-docker-compose up -d --build
+docker version
+docker compose version
 ```
 
-应用启动后：
-- 前端访问：http://localhost
-- 后端API：http://localhost:8000
+## 本地构建镜像
 
-### 方式二：单独构建和运行
-
-#### 构建后端镜像
+在项目根目录执行：
 
 ```bash
-cd backend
-docker build -t stock-calculator-backend .
-docker run -p 8000:8000 stock-calculator-backend
+./docker-build.sh
 ```
 
-#### 构建前端镜像
+默认会构建两个镜像，版本号来自项目文件：
+
+```text
+后端版本：backend/pyproject.toml 的 project.version
+前端版本：frontend/package.json 的 version
+```
+
+当前默认镜像为：
+
+```text
+stock-calculator-backend:0.1.0
+stock-calculator-frontend:0.1.0
+```
+
+可以通过环境变量分别覆盖版本：
 
 ```bash
-cd frontend
-docker build -t stock-calculator-frontend .
-docker run -p 80:80 stock-calculator-frontend
+BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
 ```
 
-**注意**：如果单独运行前端，需要修改前端代码中的 API_URL，因为前端无法通过 Nginx 代理访问后端。
-
-## Docker Compose 命令
+也可以用 `IMAGE_TAG` 同时覆盖前后端版本：
 
 ```bash
-# 启动服务
-docker-compose up
-
-# 后台启动服务
-docker-compose up -d
-
-# 停止服务
-docker-compose down
-
-# 停止并删除卷
-docker-compose down -v
-
-# 查看日志
-docker-compose logs -f
-
-# 查看特定服务的日志
-docker-compose logs -f backend
-docker-compose logs -f frontend
-
-# 重新构建镜像
-docker-compose build
-
-# 重新构建并启动
-docker-compose up --build
-
-# 查看运行状态
-docker-compose ps
+IMAGE_TAG=0.1.1 ./docker-build.sh
 ```
 
-## 构建 Docker 镜像
-
-### 构建后端镜像
+如果需要加 registry 前缀：
 
 ```bash
-docker build -t stock-calculator-backend:latest ./backend
+REGISTRY=docker.example.com ./docker-build.sh
 ```
 
-### 构建前端镜像
+等价的手动构建命令：
 
 ```bash
-docker build -t stock-calculator-frontend:latest ./frontend
+docker build --platform linux/amd64 -t stock-calculator-backend:0.1.0 ./backend
+docker build --platform linux/amd64 -t stock-calculator-frontend:0.1.0 ./frontend
 ```
 
-### 查看镜像
+## 本地启动验证
+
+本地直接构建并启动：
+
+```bash
+docker compose up -d --build
+```
+
+访问地址：
+
+```text
+前端：http://localhost
+后端：http://localhost:8000
+健康检查：http://localhost:8000/health
+API 文档：http://localhost:8000/docs
+```
+
+查看日志：
+
+```bash
+docker compose logs -f
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+停止本地服务：
+
+```bash
+docker compose down
+```
+
+## 打包并上传到服务器
+
+先构建镜像：
+
+```bash
+./docker-build.sh
+```
+
+然后导出镜像 tar 包并上传服务器：
+
+```bash
+./docker-push.sh
+```
+
+脚本默认上传到：
+
+```text
+root@123.56.122.63:/usr/vic/stock-images
+```
+
+可以通过环境变量覆盖服务器和目录：
+
+```bash
+REMOTE_HOST=root@your-server REMOTE_PATH=/opt/stock-n ./docker-push.sh
+```
+
+如果构建时覆盖了版本，上传时也要保持一致：
+
+```bash
+BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
+BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-push.sh
+```
+
+上传脚本会把以下文件传到服务器：
+
+```text
+backend-<tag>.tar
+frontend-<tag>.tar
+docker-compose.prod.yml
+```
+
+## 服务器加载镜像
+
+登录服务器：
+
+```bash
+ssh root@123.56.122.63
+cd /usr/vic/stock-images
+```
+
+加载镜像：
+
+```bash
+docker load -i backend-0.1.0.tar
+docker load -i frontend-0.1.0.tar
+```
+
+确认镜像存在：
 
 ```bash
 docker images | grep stock-calculator
 ```
 
-## 推送镜像到 Docker Hub
+## 服务器环境变量
+
+在服务器的部署目录创建 `.env`：
 
 ```bash
-# 登录 Docker Hub
-docker login
-
-# 标记镜像（替换 your-username 为你的 Docker Hub 用户名）
-docker tag stock-calculator-backend:latest your-username/stock-calculator-backend:latest
-docker tag stock-calculator-frontend:latest your-username/stock-calculator-frontend:latest
-
-# 推送镜像
-docker push your-username/stock-calculator-backend:latest
-docker push your-username/stock-calculator-frontend:latest
+cd /usr/vic/stock-images
+vi .env
 ```
 
-## 环境说明
+示例：
 
-### 后端服务
-- **端口**: 8000
-- **健康检查**: http://localhost:8000/health
-- **API文档**: http://localhost:8000/docs（如果使用 Docker Compose）
+```env
+MYSQL_HOST=host.docker.internal
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your-password
+MYSQL_DATABASE=stocks
+```
 
-### 前端服务
-- **端口**: 80
-- **访问地址**: http://localhost
-- **API代理**: 通过 Nginx 将 `/api/` 路径代理到后端
+如果 MySQL 也运行在 Docker Compose 网络里，把 `MYSQL_HOST` 改成对应的服务名。
 
-## 网络配置
+如果 MySQL 运行在服务器宿主机上，推荐使用：
 
-Docker Compose 创建了一个名为 `stock-network` 的桥接网络，前后端服务可以通过服务名互相访问：
-- 后端服务名：`backend`
-- 前端服务名：`frontend`
+```env
+MYSQL_HOST=host.docker.internal
+```
 
-## 故障排除
+`docker-compose.prod.yml` 已经配置了 `host.docker.internal:host-gateway`。
 
-### Python 3.13 镜像拉取失败
+## 服务器启动
 
-如果遇到 `ERROR [internal] load metadata for docker.io/library/python:3.13-slim` 错误，可能是因为：
-
-1. **Python 3.13-slim 镜像尚未在 Docker Hub 上发布**
-2. **网络问题导致无法拉取镜像**
-
-**解决方案：**
-
-**方案一：使用稳定版本（推荐）**
-
-使用提供的 `Dockerfile.stable`，它基于 Python 3.12：
+在服务器部署目录执行：
 
 ```bash
-# 修改 docker-compose.yml，将 Dockerfile 改为 Dockerfile.stable
-# 或者直接构建
-cd backend
-docker build -f Dockerfile.stable -t stock-calculator-backend:latest .
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-**方案二：使用非 slim 版本**
+查看状态：
 
-修改 `backend/Dockerfile`，将 `FROM python:3.13-slim` 改为 `FROM python:3.13`
-
-**方案三：配置 Docker 镜像加速器**
-
-在中国大陆，可以配置 Docker 镜像加速器：
-
-1. 编辑或创建 `/etc/docker/daemon.json`：
-```json
-{
-  "registry-mirrors": [
-    "https://docker.mirrors.ustc.edu.cn",
-    "https://hub-mirror.c.163.com"
-  ]
-}
-```
-
-2. 重启 Docker 服务：
 ```bash
-sudo systemctl restart docker  # Linux
-# 或重启 Docker Desktop (macOS/Windows)
+docker compose -f docker-compose.prod.yml ps
 ```
 
-### 端口被占用
+查看日志：
 
-如果 80 或 8000 端口被占用，可以修改 `docker-compose.yml` 中的端口映射：
-
-```yaml
-ports:
-  - "8080:80"  # 前端改为 8080
-  - "8001:8000"  # 后端改为 8001
+```bash
+docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml logs -f frontend
 ```
+
+停止服务：
+
+```bash
+docker compose -f docker-compose.prod.yml down
+```
+
+## 使用自定义镜像名或 tag 启动
+
+`docker-compose.prod.yml` 默认使用：
+
+```text
+stock-calculator-backend:0.1.0
+stock-calculator-frontend:0.1.0
+```
+
+如果加载的是其他 tag，可以启动时指定：
+
+```bash
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
+docker compose -f docker-compose.prod.yml up -d
+```
+
+如果前端 80 端口被占用，可以改端口：
+
+```bash
+FRONTEND_PORT=8080 docker compose -f docker-compose.prod.yml up -d
+```
+
+后端端口同理：
+
+```bash
+BACKEND_PORT=8001 docker compose -f docker-compose.prod.yml up -d
+```
+
+## 更新部署流程
+
+本地重新构建并上传：
+
+```bash
+BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
+BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-push.sh
+```
+
+服务器加载新镜像并启动：
+
+```bash
+cd /usr/vic/stock-images
+docker load -i backend-0.1.1.tar
+docker load -i frontend-0.1.1.tar
+
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
+docker compose -f docker-compose.prod.yml up -d
+```
+
+## 常见问题
+
+### Docker daemon 未启动
+
+如果本地构建时报错类似：
+
+```text
+failed to connect to the docker API
+```
+
+先启动 Docker Desktop 或 Docker daemon，再重新执行构建命令。
+
+### 后端健康检查失败
+
+查看后端日志：
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+重点检查 `.env` 里的数据库连接信息是否正确。
 
 ### 前端无法访问后端
 
-确保：
-1. 使用 Docker Compose 启动（推荐），这样前端可以通过 Nginx 代理访问后端
-2. 或者单独运行时，修改前端代码中的 API_URL 为后端地址
-
-### 查看容器日志
+前端容器通过 Nginx 把请求代理到后端服务名 `backend:8000`。请确认两个容器都在运行：
 
 ```bash
-# 查看所有日志
-docker-compose logs
-
-# 查看后端日志
-docker-compose logs backend
-
-# 查看前端日志
-docker-compose logs frontend
-
-# 实时查看日志
-docker-compose logs -f
+docker compose -f docker-compose.prod.yml ps
 ```
 
-### 进入容器调试
+### 服务器 MySQL 连接失败
 
-```bash
-# 进入后端容器
-docker-compose exec backend sh
+如果 MySQL 在宿主机上，不要把 `MYSQL_HOST` 写成 `localhost`。容器里的 `localhost` 指向容器自己，应使用：
 
-# 进入前端容器
-docker-compose exec frontend sh
-```
-
-## 生产环境建议
-
-1. **使用具体的镜像标签**：不要使用 `latest`，使用版本号如 `v1.0.0`
-2. **配置 HTTPS**：在生产环境中配置 SSL 证书
-3. **限制资源**：在 `docker-compose.yml` 中添加资源限制
-4. **使用环境变量**：将敏感配置通过环境变量传入
-5. **日志管理**：配置日志轮转和集中日志管理
-6. **健康检查**：确保健康检查配置正确
-7. **安全扫描**：定期扫描镜像漏洞
-
-## 示例：生产环境 docker-compose.yml
-
-```yaml
-version: '3.8'
-
-services:
-  backend:
-    image: your-registry/stock-calculator-backend:v1.0.0
-    restart: always
-    ports:
-      - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  frontend:
-    image: your-registry/stock-calculator-frontend:v1.0.0
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 128M
+```env
+MYSQL_HOST=host.docker.internal
 ```

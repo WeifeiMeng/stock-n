@@ -1,30 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Docker 构建脚本
-# 用于快速构建前后端 Docker 镜像
+REGISTRY="${REGISTRY:-}"
+BASE_REGISTRY="${BASE_REGISTRY:-docker.io}"
+PLATFORM="${PLATFORM:-linux/amd64}"
+BACKEND_IMAGE="${BACKEND_IMAGE:-stock-calculator-backend}"
+FRONTEND_IMAGE="${FRONTEND_IMAGE:-stock-calculator-frontend}"
+BACKEND_VERSION="${BACKEND_VERSION:-$(node scripts/read-version.mjs backend)}"
+FRONTEND_VERSION="${FRONTEND_VERSION:-$(node scripts/read-version.mjs frontend)}"
 
-set -e
+if [[ -n "${IMAGE_TAG:-}" ]]; then
+  BACKEND_VERSION="${IMAGE_TAG}"
+  FRONTEND_VERSION="${IMAGE_TAG}"
+fi
 
-REGISTRY="docker.xuanyuan.run"
-BASE_REGISTRY="docker.io"  # 基础镜像从 docker.io 拉取（免费）
-BACKEND_IMAGE="stock-calculator-backend"
-FRONTEND_IMAGE="stock-calculator-frontend"
+image_ref() {
+  local image="$1"
+  local version="$2"
+  if [[ -n "${REGISTRY}" ]]; then
+    printf "%s/%s:%s" "${REGISTRY}" "${image}" "${version}"
+  else
+    printf "%s:%s" "${image}" "${version}"
+  fi
+}
 
-echo "🚀 开始构建 Docker 镜像..."
+BACKEND_REF="$(image_ref "${BACKEND_IMAGE}" "${BACKEND_VERSION}")"
+FRONTEND_REF="$(image_ref "${FRONTEND_IMAGE}" "${FRONTEND_VERSION}")"
 
-# 构建后端镜像
-echo "📦 构建后端镜像..."
-docker build --platform linux/amd64 --build-arg BASE_REGISTRY=$BASE_REGISTRY -t ${REGISTRY}/${BACKEND_IMAGE}:latest ./backend
+echo "Building backend image: ${BACKEND_REF}"
+docker build \
+  --platform "${PLATFORM}" \
+  --build-arg "BASE_REGISTRY=${BASE_REGISTRY}" \
+  -t "${BACKEND_REF}" \
+  ./backend
 
-# 构建前端镜像
-echo "📦 构建前端镜像..."
-docker build --platform linux/amd64 --build-arg BASE_REGISTRY=$BASE_REGISTRY -t ${REGISTRY}/${FRONTEND_IMAGE}:latest ./frontend
+echo "Building frontend image: ${FRONTEND_REF}"
+docker build \
+  --platform "${PLATFORM}" \
+  --build-arg "BASE_REGISTRY=${BASE_REGISTRY}" \
+  -t "${FRONTEND_REF}" \
+  ./frontend
 
-echo "✅ 所有镜像构建完成！"
-echo ""
-echo "可以使用以下命令运行："
-echo "  docker-compose up"
-echo ""
-echo "或者单独运行："
-echo "  docker run -p 8000:8000 stock-calculator-backend:latest"
-echo "  docker run -p 80:80 stock-calculator-frontend:latest"
+echo "Done."
+echo "Backend:  ${BACKEND_REF}"
+echo "Frontend: ${FRONTEND_REF}"

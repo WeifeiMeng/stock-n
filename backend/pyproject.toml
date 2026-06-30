@@ -13,6 +13,9 @@ dependencies = [
     "aiomysql>=0.2.0",
     "cryptography>=42.0.0",
     "chinese-calendar>=1.8.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pandas>=2.0.0",
 ]
 
 

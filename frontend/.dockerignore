@@ -2,6 +2,11 @@
 *.md
 README.md
 
+# Build output and dependencies
+node_modules/
+dist/
+npm-debug.log*
+
 # IDE
 .vscode/
 .idea/

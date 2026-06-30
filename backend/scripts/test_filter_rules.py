@@ -15,11 +15,22 @@ BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from src.vo.stock import ZtStockInfo
-from src.dao.zt_stock_dao import ZtStockDAO
-from src.middleware import close_mysql_engine, get_session_factory
-from src.stock_service.ztapi import get_zt_stock_list
-from scripts.filter_stock_n import check_stock_all_rules, filter_stocks_by_all_rules
+from src.domain.model import ZtStockInfo
+from src.infrastructure.database.repositories import ZtStockRepository
+from src.infrastructure.database.connection import close_mysql_engine, get_session_factory
+from src.infrastructure.external.zhitu_api import ZhituApiClient
+from src.application.filter_stock_n import check_stock_all_rules, filter_stocks_by_all_rules
+
+
+class _TestProvider:
+    """Simple DayDataProvider impl wrapping ZhituApiClient for test scripts."""
+
+    async def get_day_data(self, code, name, start_date, end_date, min_records=2):
+        client = ZhituApiClient()
+        try:
+            return await client.get_day_detail(start_date, end_date, code, name)
+        finally:
+            await client.close()
 
 
 def get_prev_workday(date_str: str) -> str:
@@ -37,7 +48,7 @@ async def get_stock_from_db(code: str, trade_date: str) -> ZtStockInfo | None:
     if session_factory is None:
         return None
     async with session_factory() as session:
-        stocks = await ZtStockDAO.list_by_trade_date(session, trade_date, limit=500)
+        stocks = await ZtStockRepository.list_by_trade_date(session, trade_date, limit=500)
         for s in stocks:
             if s.code == code:
                 return ZtStockInfo(
@@ -61,11 +72,15 @@ async def get_stock_from_db(code: str, trade_date: str) -> ZtStockInfo | None:
 
 async def get_stock_from_api(code: str, trade_date: str) -> ZtStockInfo | None:
     """从下游接口获取指定交易日、指定股票的涨停信息"""
-    stocks = await get_zt_stock_list(trade_date)
-    for s in stocks:
-        if s.code == code:
-            return s
-    return None
+    client = ZhituApiClient()
+    try:
+        stocks = await client.get_zt_stock_list(trade_date)
+        for s in stocks:
+            if s.code == code:
+                return s
+        return None
+    finally:
+        await client.close()
 
 
 async def get_stock(code: str, trade_date: str) -> ZtStockInfo | None:
@@ -88,7 +103,7 @@ async def get_stock(code: str, trade_date: str) -> ZtStockInfo | None:
     return stock
 
 
-async def test_check_stock_all_rules(stock: ZtStockInfo, prev_workday: str, target_date: str):
+async def test_check_stock_all_rules(stock: ZtStockInfo, prev_workday: str, target_date: str, provider):
     """测试单只股票规则检查"""
     print(f"\n{'='*60}")
     print(f"测试股票: {stock.name} ({stock.code})")
@@ -96,7 +111,7 @@ async def test_check_stock_all_rules(stock: ZtStockInfo, prev_workday: str, targ
     print(f"目标日: {target_date}")
     print(f"{'='*60}")
 
-    result = await check_stock_all_rules(stock, prev_workday, target_date)
+    result = await check_stock_all_rules(stock, prev_workday, target_date, provider)
     print(f"规则检查结果: {'通过 ✓' if result else '未通过 ✗'}")
     return result
 
@@ -123,7 +138,8 @@ async def main():
         return
 
     # 测试规则检查
-    await test_check_stock_all_rules(stock, prev_workday, target_date)
+    provider = _TestProvider()
+    await test_check_stock_all_rules(stock, prev_workday, target_date, provider)
 
     await close_mysql_engine()
     print("\n测试完成!")

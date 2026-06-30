@@ -1,0 +1,23 @@
+from typing import Protocol, List
+from src.domain.model import DayStockInfo, ZtStockInfo, StockNInfo
+
+
+class DayDataProvider(Protocol):
+    """日线数据获取协议"""
+    async def get_day_data(
+        self, code: str, name: str, start_date: str, end_date: str, min_records: int = 2
+    ) -> List[DayStockInfo]: ...
+
+
+class ZtApiClient(Protocol):
+    """涨停API客户端协议"""
+    async def get_zt_stock_list(self, date: str) -> List[ZtStockInfo]: ...
+
+
+class StockRepository(Protocol):
+    """股票数据仓库协议"""
+    async def get_zt_stocks(self, trade_date: str) -> List[ZtStockInfo]: ...
+    async def save_zt_stocks(self, stocks: List[ZtStockInfo], trade_date: str) -> int: ...
+    async def delete_stock_n_by_date(self, trade_date: str) -> int: ...
+    async def save_stock_n_batch(self, stocks: List[StockNInfo]) -> int: ...
+    async def get_stock_n_list(self, trade_date: str) -> List[StockNInfo]: ...
