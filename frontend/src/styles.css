@@ -163,9 +163,13 @@ footer {
   background: var(--success);
 }
 
+.position-btn {
+  background: var(--warning);
+}
+
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   margin-top: 16px;
   overflow: hidden;
@@ -241,6 +245,40 @@ footer {
   overflow: hidden;
 }
 
+.success-message {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 121, 76, 0.3);
+  border-radius: 8px;
+  background: rgba(22, 121, 76, 0.1);
+  color: var(--success);
+}
+
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.section-heading span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.position-panel {
+  border-color: rgba(22, 121, 76, 0.35);
+}
+
 .table-scroll {
   overflow-x: auto;
 }
@@ -271,7 +309,9 @@ tbody tr:hover {
 tbody tr.warned td:first-child,
 tbody tr.warned td:nth-child(2),
 tbody tr.warned td:nth-child(3),
-tbody tr.warned td:nth-child(4) {
+tbody tr.warned td:nth-child(4),
+tbody tr.warned td:nth-child(5),
+tbody tr.warned td:nth-child(6) {
   background: rgba(180, 35, 24, 0.13);
 }
 
@@ -299,6 +339,12 @@ tbody tr.warned td:nth-child(4) {
 
 .loss {
   color: var(--success);
+  font-weight: 700;
+}
+
+.amount {
+  color: var(--accent);
+  font-family: Consolas, Monaco, monospace;
   font-weight: 700;
 }
 
@@ -341,9 +387,21 @@ footer {
   color: #111827;
 }
 
+.pdf-export h3 {
+  margin: 18px 0 8px;
+  color: #111827;
+  font-size: 16px;
+}
+
 .pdf-export p {
   margin: 0 0 16px;
   color: #4b5563;
+}
+
+.pdf-export table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
 }
 
 .pdf-export th,
@@ -376,6 +434,11 @@ footer {
 
   .controls label {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .section-heading {
+    align-items: flex-start;
     flex-direction: column;
   }
 }

@@ -4,8 +4,8 @@ from typing import Iterable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo
-from .entities import ZtStockEntity, DayStockEntity, StockNEntity
+from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo, StockPositionInfo
+from .entities import ZtStockEntity, DayStockEntity, StockNEntity, StockPositionEntity
 from .base import Base
 
 
@@ -125,6 +125,51 @@ class StockNRepository:
         return len(entities)
 
 
+class StockPositionRepository:
+    @staticmethod
+    async def delete_by_trade_date(session: AsyncSession, trade_date: str) -> int:
+        from sqlalchemy import delete as sa_delete
+        stmt = sa_delete(StockPositionEntity).where(StockPositionEntity.trade_date == trade_date)
+        result = await session.execute(stmt)
+        return result.rowcount
+
+    @staticmethod
+    async def list_by_trade_date(session: AsyncSession, trade_date: str, limit: int = 200) -> list[StockPositionEntity]:
+        stmt = (
+            select(StockPositionEntity)
+            .where(StockPositionEntity.trade_date == trade_date)
+            .order_by(StockPositionEntity.buy_amount.desc())
+            .limit(limit)
+        )
+        result = await session.execute(stmt)
+        rows = list(result.scalars().all())
+        seen: set[str] = set()
+        deduped: list[StockPositionEntity] = []
+        for row in rows:
+            if row.code not in seen:
+                seen.add(row.code)
+                deduped.append(row)
+        return deduped
+
+    @staticmethod
+    async def insert_many(session: AsyncSession, positions: Iterable[StockPositionInfo]) -> int:
+        entities = [
+            StockPositionEntity(
+                code=p.code, name=p.name, trade_date=p.trade_date,
+                base_price=p.base_price, highest_price=p.highest_price,
+                lowest_price=p.lowest_price, buy_price=p.buy_price,
+                buy_lots=p.buy_lots, buy_shares=p.buy_shares,
+                buy_amount=p.buy_amount, status=p.status,
+            )
+            for p in positions
+        ]
+        if not entities:
+            return 0
+        session.add_all(entities)
+        await session.flush()
+        return len(entities)
+
+
 async def init_all_tables() -> None:
     """创建所有数据表（幂等，仅当引擎已配置时执行）"""
     from .connection import get_mysql_engine
@@ -136,4 +181,5 @@ async def init_all_tables() -> None:
             ZtStockEntity.__table__,
             DayStockEntity.__table__,
             StockNEntity.__table__,
+            StockPositionEntity.__table__,
         ])

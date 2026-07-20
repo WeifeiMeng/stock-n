@@ -61,3 +61,25 @@ class StockNEntity(Base):
     dt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     n: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     base_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+
+class StockPositionEntity(Base):
+    __tablename__ = "stock_position"
+    __table_args__ = (
+        Index("idx_stock_position_code_date", "code", "trade_date"),
+        Index("idx_stock_position_date", "trade_date"),
+        Index("idx_stock_position_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(16), nullable=False)
+    name: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    trade_date: Mapped[str] = mapped_column(String(10), nullable=False, default="")
+    base_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    highest_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    lowest_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    buy_price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    buy_lots: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    buy_shares: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    buy_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="holding")

@@ -47,3 +47,18 @@ class StockNInfo:
     dt: bool
     n: int
     base_price: float
+
+
+@dataclass
+class StockPositionInfo:
+    code: str
+    name: str
+    trade_date: str
+    base_price: float
+    highest_price: float
+    lowest_price: float
+    buy_price: float
+    buy_lots: int
+    buy_shares: int
+    buy_amount: float
+    status: str = "holding"

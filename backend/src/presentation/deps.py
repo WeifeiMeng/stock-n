@@ -1,7 +1,12 @@
 """依赖注入 —— 将基础设施实现适配到应用层协议"""
-from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo
+from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo, StockPositionInfo
 from src.application.protocols import DayDataProvider, ZtApiClient, StockRepository
-from src.infrastructure.database.repositories import ZtStockRepository, DayStockRepository, StockNRepository
+from src.infrastructure.database.repositories import (
+    ZtStockRepository,
+    DayStockRepository,
+    StockNRepository,
+    StockPositionRepository,
+)
 
 
 def _zt_entity_to_info(e) -> ZtStockInfo:
@@ -119,6 +124,44 @@ def get_stock_repository() -> StockRepository:
                     start_pri=e.start_pri, end_pri=e.end_pri,
                     highest_pri=e.highest_pri, lowest_pri=e.lowest_pri,
                     date=e.trade_date, zt=e.zt, dt=e.dt, n=e.n, base_price=e.base_price,
+                )
+                for e in entities
+            ]
+
+        async def delete_stock_positions_by_date(self, trade_date: str):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return 0
+            async with sf() as session:
+                count = await StockPositionRepository.delete_by_trade_date(session, trade_date)
+                await session.commit()
+            return count
+
+        async def save_stock_positions_batch(self, positions):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return 0
+            async with sf() as session:
+                count = await StockPositionRepository.insert_many(session, positions)
+                await session.commit()
+            return count
+
+        async def get_stock_positions(self, trade_date: str):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return []
+            async with sf() as session:
+                entities = await StockPositionRepository.list_by_trade_date(session, trade_date)
+            return [
+                StockPositionInfo(
+                    code=e.code, name=e.name, trade_date=e.trade_date,
+                    base_price=e.base_price, highest_price=e.highest_price,
+                    lowest_price=e.lowest_price, buy_price=e.buy_price,
+                    buy_lots=e.buy_lots, buy_shares=e.buy_shares,
+                    buy_amount=e.buy_amount, status=e.status,
                 )
                 for e in entities
             ]

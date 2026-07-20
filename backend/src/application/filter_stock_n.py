@@ -5,13 +5,14 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, AsyncGenerator
 
-from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo
+from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo, StockPositionInfo
 from src.domain.rules import (
     is_zt, is_dt, filter_st_bj,
     ZT_THRESHOLD, DT_THRESHOLD, get_market,
     get_prev_workday, get_n_prev_workday,
 )
 from .protocols import DayDataProvider, ZtApiClient, StockRepository
+from .position import calculate_position_plan
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class PipelineResult:
     passed: list[ZtStockInfo] = field(default_factory=list)
     rejected: list[FilterResultItem] = field(default_factory=list)
     stock_n_inserted: int = 0
+    stock_positions_inserted: int = 0
 
 
 async def _get_day_data_cached(
@@ -164,11 +166,35 @@ async def save_stock_n_batch(
             dt=is_dt(zt_day_info.end_pri, target_info.end_pri),
             n=stock.lbc, base_price=base_info.end_pri,
         ))
+    await repo.delete_stock_n_by_date(target_date)
+    await repo.delete_stock_positions_by_date(target_date)
     if not stock_n_list:
         return 0
     # 先删除该日期已有数据，再插入新结果
-    await repo.delete_stock_n_by_date(target_date)
-    return await repo.save_stock_n_batch(stock_n_list)
+    inserted = await repo.save_stock_n_batch(stock_n_list)
+    await repo.save_stock_positions_batch(build_stock_positions(stock_n_list))
+    return inserted
+
+
+def build_stock_positions(stocks: list[StockNInfo]) -> list[StockPositionInfo]:
+    positions: list[StockPositionInfo] = []
+    for stock in stocks:
+        plan = calculate_position_plan(stock.base_price, stock.lowest_pri)
+        if not plan.triggered:
+            continue
+        positions.append(StockPositionInfo(
+            code=stock.code,
+            name=stock.name,
+            trade_date=stock.date,
+            base_price=stock.base_price,
+            highest_price=stock.highest_pri,
+            lowest_price=stock.lowest_pri,
+            buy_price=plan.buy_price,
+            buy_lots=plan.lots,
+            buy_shares=plan.shares,
+            buy_amount=plan.amount,
+        ))
+    return positions
 
 
 async def run_full_pipeline(
@@ -207,7 +233,8 @@ async def run_full_pipeline(
     # Step 6: 入库 stock_n
     if passed:
         result.stock_n_inserted = await save_stock_n_batch(passed, target_date, prev_workday, provider, repo)
-        logger.info("入库 stock_n: %d 条", result.stock_n_inserted)
+        result.stock_positions_inserted = len(await repo.get_stock_positions(target_date))
+        logger.info("Saved stock_n rows: %d", result.stock_n_inserted)
 
     return result
 
@@ -280,8 +307,9 @@ async def run_full_pipeline_stream(
     stock_n_inserted = 0
     if passed_list:
         stock_n_inserted = await save_stock_n_batch(passed_list, target_date, prev_workday, provider, repo)
-        logger.info("入库 stock_n: %d 条", stock_n_inserted)
+        logger.info("Saved stock_n rows: %d", stock_n_inserted)
 
+    stock_positions_inserted = len(await repo.get_stock_positions(target_date))
     yield _sse_event("complete", {
         "type": "complete", "success": True,
         "date": target_date, "prev_workday": prev_workday,
@@ -289,6 +317,7 @@ async def run_full_pipeline_stream(
         "passed_count": len(passed_list),
         "rejected_count": len(rejected_list),
         "stock_n_inserted": stock_n_inserted,
+        "stock_positions_inserted": stock_positions_inserted,
         "rejected": [
             f"{r.stock.name}({r.stock.code}): {r.reason}"
             for r in rejected_list

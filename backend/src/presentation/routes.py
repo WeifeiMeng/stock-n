@@ -2,8 +2,16 @@ from fastapi import HTTPException
 from starlette.responses import StreamingResponse
 
 from src.application.filter_stock_n import run_full_pipeline, run_full_pipeline_stream
+from src.application.position_update import update_positions_from_prev_stock_n
 from src.application.price_calculate import calculate_stock_prices
-from .models import CalculateRequest, FilterRequest, FilterResponse, StockNItem
+from .models import (
+    CalculateRequest,
+    FilterRequest,
+    FilterResponse,
+    PositionItem,
+    PositionUpdateResponse,
+    StockNItem,
+)
 from .deps import get_day_data_provider, get_api_client, get_stock_repository
 
 
@@ -30,6 +38,7 @@ async def run_filter(request: FilterRequest) -> FilterResponse:
             passed_count=len(result.passed),
             rejected_count=len(result.rejected),
             stock_n_inserted=result.stock_n_inserted,
+            stock_positions_inserted=result.stock_positions_inserted,
             rejected=[
                 f"{r.stock.name}({r.stock.code}): {r.reason}"
                 for r in result.rejected
@@ -72,14 +81,66 @@ async def get_stock_n_list(date: str) -> list[StockNItem]:
     repo = get_stock_repository()
     try:
         entities = await repo.get_stock_n_list(date)
-        return [
-            StockNItem(
+        positions = await repo.get_stock_positions(date)
+        position_map = {p.code: p for p in positions}
+        items = []
+        for e in entities:
+            if e.base_price <= 0:
+                continue
+            position = position_map.get(e.code)
+            items.append(StockNItem(
                 code=e.code,
                 name=e.name,
                 current_price=e.end_pri,
                 base_price=e.base_price,
+                highest_price=e.highest_pri,
+                lowest_price=e.lowest_pri,
+                buy1_price=position.buy_price if position else 0.0,
+                position_triggered=position is not None,
+                buy_lots=position.buy_lots if position else 0,
+                buy_shares=position.buy_shares if position else 0,
+                buy_amount=position.buy_amount if position else 0.0,
+            ))
+        return items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def update_stock_positions(date: str) -> PositionUpdateResponse:
+    provider = get_day_data_provider()
+    repo = get_stock_repository()
+    try:
+        result = await update_positions_from_prev_stock_n(date, provider, repo)
+        return PositionUpdateResponse(
+            success=True,
+            date=result.trade_date,
+            source_date=result.source_date,
+            source_total=result.source_total,
+            positions_inserted=result.positions_inserted,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def get_stock_positions(date: str) -> list[PositionItem]:
+    repo = get_stock_repository()
+    try:
+        positions = await repo.get_stock_positions(date)
+        return [
+            PositionItem(
+                code=p.code,
+                name=p.name,
+                trade_date=p.trade_date,
+                base_price=p.base_price,
+                highest_price=p.highest_price,
+                lowest_price=p.lowest_price,
+                buy1_price=p.buy_price,
+                buy_lots=p.buy_lots,
+                buy_shares=p.buy_shares,
+                buy_amount=p.buy_amount,
+                status=p.status,
             )
-            for e in entities if e.base_price > 0
+            for p in positions
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

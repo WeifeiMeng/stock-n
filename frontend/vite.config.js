@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       '/health': 'http://localhost:8000',
       '/stock-n': 'http://localhost:8000',
+      '/stock-position': 'http://localhost:8000',
       '/calculate-price': 'http://localhost:8000',
       '/api': 'http://localhost:8000',
     },

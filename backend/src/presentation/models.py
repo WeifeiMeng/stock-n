@@ -13,7 +13,30 @@ class FilterResponse(BaseModel):
     passed_count: int
     rejected_count: int
     stock_n_inserted: int
+    stock_positions_inserted: int = 0
     rejected: list[str] = []
+
+
+class PositionUpdateResponse(BaseModel):
+    success: bool
+    date: str
+    source_date: str
+    source_total: int
+    positions_inserted: int
+
+
+class PositionItem(BaseModel):
+    code: str
+    name: str
+    trade_date: str
+    base_price: float
+    highest_price: float
+    lowest_price: float
+    buy1_price: float
+    buy_lots: int
+    buy_shares: int
+    buy_amount: float
+    status: str
 
 
 class StockNItem(BaseModel):
@@ -21,6 +44,13 @@ class StockNItem(BaseModel):
     name: str
     current_price: float
     base_price: float
+    highest_price: float
+    lowest_price: float
+    buy1_price: float
+    position_triggered: bool
+    buy_lots: int
+    buy_shares: int
+    buy_amount: float
 
 
 class CalculateRequest(BaseModel):
