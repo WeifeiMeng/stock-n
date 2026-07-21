@@ -1,6 +1,10 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import html2pdf from 'html2pdf.js';
+import { computed, onMounted, ref, watch } from 'vue';
+import { jsPDF } from 'jspdf';
+import simHeiFontUrl from './assets/fonts/simhei.ttf?url';
+
+const pdfFontName = 'SimHei';
+let simHeiFontBase64Promise = null;
 
 const theme = ref(localStorage.getItem('theme') || 'light');
 const date = ref(today());
@@ -14,14 +18,16 @@ const filterLogs = ref([]);
 const filterSummary = ref('');
 const filterResult = ref(null);
 const positionSummary = ref('');
-const pdfRef = ref(null);
+const exportingPdf = ref(false);
 
 const stockCount = computed(() => stocks.value.length);
 const hasStocks = computed(() => stocks.value.length > 0);
 const positionStocks = computed(() => positions.value);
 const positionCount = computed(() => positions.value.length);
 const hasPositions = computed(() => positions.value.length > 0);
-const canExport = computed(() => (hasStocks.value || hasPositions.value) && !loading.value && !updatingPositions.value);
+const canExport = computed(
+  () => (hasStocks.value || hasPositions.value) && !loading.value && !updatingPositions.value && !exportingPdf.value,
+);
 
 watch(theme, (value) => {
   document.documentElement.dataset.theme = value;
@@ -262,16 +268,181 @@ async function runFilter() {
 async function exportToPdf() {
   if (!canExport.value) return;
 
-  await nextTick();
-  const options = {
-    margin: 10,
-    filename: `N规则复盘_${date.value}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-  };
+  exportingPdf.value = true;
+  error.value = '';
 
-  await html2pdf().set(options).from(pdfRef.value).save();
+  try {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    await registerPdfFont(doc);
+    const margin = 8;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = margin;
+
+    const ensureSpace = (height) => {
+      if (y + height <= pageHeight - margin) return;
+      doc.addPage();
+      y = margin;
+    };
+
+    const drawTitle = (title) => {
+      doc.setFont(pdfFontName, 'bold');
+      doc.setFontSize(14);
+      doc.text(toPdfText(title), margin, y);
+      y += 7;
+    };
+
+    const drawText = (text) => {
+      doc.setFont(pdfFontName, 'normal');
+      doc.setFontSize(9);
+      doc.text(toPdfText(text), margin, y);
+      y += 6;
+    };
+
+    const drawTable = (title, columns, rows) => {
+      if (!rows.length) return;
+
+      ensureSpace(18);
+      doc.setFont(pdfFontName, 'bold');
+      doc.setFontSize(11);
+      doc.text(toPdfText(title), margin, y);
+      y += 6;
+
+      const headerHeight = 7;
+      const rowHeight = 6;
+      const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
+      const startX = margin;
+
+      const drawHeader = () => {
+        doc.setFont(pdfFontName, 'bold');
+        doc.setFontSize(7);
+        doc.setFillColor(243, 244, 246);
+        doc.rect(startX, y, tableWidth, headerHeight, 'F');
+
+        let x = startX;
+        for (const column of columns) {
+          doc.rect(x, y, column.width, headerHeight);
+          doc.text(toPdfText(column.label), x + 1.5, y + 4.8, { maxWidth: column.width - 3 });
+          x += column.width;
+        }
+        y += headerHeight;
+      };
+
+      drawHeader();
+      doc.setFont(pdfFontName, 'normal');
+      doc.setFontSize(7);
+
+      for (const row of rows) {
+        if (y + rowHeight > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+          drawHeader();
+          doc.setFont(pdfFontName, 'normal');
+          doc.setFontSize(7);
+        }
+
+        let x = startX;
+        for (const column of columns) {
+          const value = column.getValue(row);
+          doc.rect(x, y, column.width, rowHeight);
+          doc.text(toPdfText(value), x + 1.5, y + 4.2, { maxWidth: column.width - 3 });
+          x += column.width;
+        }
+        y += rowHeight;
+      }
+
+      y += 4;
+    };
+
+    drawTitle('N 规则复盘');
+    drawText(`交易日期：${date.value}    股票池：${stockCount.value}    持仓触发：${positionCount.value}`);
+
+    drawTable(
+      '持仓触发',
+      [
+        { label: '代码', width: 24, getValue: (stock) => stock.code },
+        { label: '名称', width: 38, getValue: (stock) => stock.name },
+        { label: '最高价', width: 24, getValue: (stock) => formatNumber(stock.highest_price) },
+        { label: '最低价', width: 24, getValue: (stock) => formatNumber(stock.lowest_price) },
+        { label: 'B1 价格', width: 24, getValue: (stock) => formatNumber(stock.buy1_price) },
+        { label: '买入手数', width: 22, getValue: (stock) => stock.buy_lots },
+        { label: '买入股数', width: 24, getValue: (stock) => stock.buy_shares },
+        { label: '买入金额', width: 30, getValue: (stock) => formatNumber(stock.buy_amount) },
+      ],
+      positionStocks.value,
+    );
+
+    drawTable(
+      '股票池明细',
+      [
+        { label: '代码', width: 20, getValue: (stock) => stock.code },
+        { label: '名称', width: 28, getValue: (stock) => stock.name },
+        { label: '当前价', width: 18, getValue: (stock) => formatNumber(stock.current_price) },
+        { label: '基准价', width: 18, getValue: (stock) => formatNumber(stock.base_price) },
+        { label: '最高价', width: 18, getValue: (stock) => formatNumber(stock.highest_price) },
+        { label: '最低价', width: 18, getValue: (stock) => formatNumber(stock.lowest_price) },
+        { label: '买 1', width: 18, getValue: (stock) => formatNumber(stock.prices.buy1) },
+        { label: '止盈 1', width: 18, getValue: (stock) => formatNumber(stock.prices.profit1) },
+        { label: '止损 1', width: 18, getValue: (stock) => formatNumber(stock.prices.loss1) },
+        { label: '买 2', width: 18, getValue: (stock) => formatNumber(stock.prices.buy2) },
+        { label: '止盈 2', width: 18, getValue: (stock) => formatNumber(stock.prices.profit2) },
+        { label: '止损 2', width: 18, getValue: (stock) => formatNumber(stock.prices.loss2) },
+        { label: '买 3', width: 18, getValue: (stock) => formatNumber(stock.prices.buy3) },
+        { label: '止盈 3', width: 18, getValue: (stock) => formatNumber(stock.prices.profit3) },
+        { label: '止损 3', width: 18, getValue: (stock) => formatNumber(stock.prices.loss3) },
+      ],
+      stocks.value,
+    );
+
+    doc.save(`N规则复盘_${date.value}.pdf`);
+  } catch (err) {
+    error.value = `导出失败：${err.message}`;
+  } finally {
+    exportingPdf.value = false;
+  }
+}
+
+function formatNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : '';
+}
+
+function toPdfText(value) {
+  return String(value ?? '');
+}
+
+async function registerPdfFont(doc) {
+  const fontBase64 = await loadSimHeiFontBase64();
+  doc.addFileToVFS('simhei.ttf', fontBase64);
+  doc.addFont('simhei.ttf', pdfFontName, 'normal');
+  doc.addFont('simhei.ttf', pdfFontName, 'bold');
+  doc.setFont(pdfFontName, 'normal');
+}
+
+function loadSimHeiFontBase64() {
+  if (!simHeiFontBase64Promise) {
+    simHeiFontBase64Promise = fetch(simHeiFontUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`字体加载失败：HTTP ${response.status}`);
+        }
+        return response.arrayBuffer();
+      })
+      .then(arrayBufferToBase64);
+  }
+  return simHeiFontBase64Promise;
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
 }
 </script>
 
@@ -284,7 +455,9 @@ async function exportToPdf() {
       </div>
 
       <div class="top-actions">
-        <button class="secondary-btn" :disabled="!canExport" @click="exportToPdf">导出 PDF</button>
+        <button class="secondary-btn" :disabled="!canExport" @click="exportToPdf">
+          {{ exportingPdf ? '导出中...' : '导出 PDF' }}
+        </button>
         <label class="theme-toggle">
           <span>深色</span>
           <input v-model="theme" type="checkbox" true-value="dark" false-value="light" />
@@ -435,79 +608,5 @@ async function exportToPdf() {
 
     <footer>数据仅供参考，不构成投资建议。</footer>
 
-    <div class="pdf-export" ref="pdfRef">
-      <h2>N 规则复盘</h2>
-      <p>交易日期：{{ date }}，股票池 {{ stockCount }} 只，持仓触发 {{ positionCount }} 只</p>
-
-      <h3 v-if="hasPositions">持仓触发</h3>
-      <table v-if="hasPositions">
-        <thead>
-          <tr>
-            <th>代码</th>
-            <th>名称</th>
-            <th>最高价</th>
-            <th>最低价</th>
-            <th>B1 价格</th>
-            <th>买入手数</th>
-            <th>买入股数</th>
-            <th>买入金额</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="stock in positionStocks" :key="`pdf-position-${stock.code}-${stock.name}`">
-            <td>{{ stock.code }}</td>
-            <td>{{ stock.name }}</td>
-            <td>{{ stock.highest_price.toFixed(2) }}</td>
-            <td>{{ stock.lowest_price.toFixed(2) }}</td>
-            <td>{{ stock.buy1_price.toFixed(2) }}</td>
-            <td>{{ stock.buy_lots }}</td>
-            <td>{{ stock.buy_shares }}</td>
-            <td>{{ stock.buy_amount.toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h3 v-if="hasStocks">股票池明细</h3>
-      <table v-if="hasStocks">
-        <thead>
-          <tr>
-            <th>代码</th>
-            <th>名称</th>
-            <th>当前价</th>
-            <th>基准价</th>
-            <th>最高价</th>
-            <th>最低价</th>
-            <th>买 1</th>
-            <th>止盈 1</th>
-            <th>止损 1</th>
-            <th>买 2</th>
-            <th>止盈 2</th>
-            <th>止损 2</th>
-            <th>买 3</th>
-            <th>止盈 3</th>
-            <th>止损 3</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="stock in stocks" :key="`pdf-${stock.code}-${stock.name}`">
-            <td>{{ stock.code }}</td>
-            <td>{{ stock.name }}</td>
-            <td>{{ stock.current_price.toFixed(2) }}</td>
-            <td>{{ stock.base_price.toFixed(2) }}</td>
-            <td>{{ stock.highest_price.toFixed(2) }}</td>
-            <td>{{ stock.lowest_price.toFixed(2) }}</td>
-            <td>{{ stock.prices.buy1.toFixed(2) }}</td>
-            <td>{{ stock.prices.profit1.toFixed(2) }}</td>
-            <td>{{ stock.prices.loss1.toFixed(2) }}</td>
-            <td>{{ stock.prices.buy2.toFixed(2) }}</td>
-            <td>{{ stock.prices.profit2.toFixed(2) }}</td>
-            <td>{{ stock.prices.loss2.toFixed(2) }}</td>
-            <td>{{ stock.prices.buy3.toFixed(2) }}</td>
-            <td>{{ stock.prices.profit3.toFixed(2) }}</td>
-            <td>{{ stock.prices.loss3.toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </main>
 </template>

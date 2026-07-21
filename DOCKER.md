@@ -1,33 +1,39 @@
-# Docker 部署说明
+# Docker 部署指南
 
-本文档说明如何把本项目的前端和后端构建成 Docker image，上传到服务器，并在服务器上启动。
+本文档说明如何把项目构建成 Docker 镜像，并部署到服务器。
 
-## 文件说明
+## 1. 环境变量怎么处理
 
-```text
-stock-n/
-  backend/Dockerfile          后端镜像构建文件
-  frontend/Dockerfile         前端镜像构建文件
-  frontend/package.json       前端 npm 项目配置，包含前端版本号
-  frontend/nginx.conf         前端 Nginx 配置，负责静态文件和 API 代理
-  docker-compose.yml          本地构建并启动
-  docker-compose.prod.yml     服务器使用已加载镜像启动
-  docker-build.sh             本地构建前后端镜像
-  docker-push.sh              本地导出镜像 tar 并上传服务器
+后端需要数据库和接口 token 等配置，不要在打镜像时写进镜像。原因是镜像层会保留敏感信息，也不方便不同环境复用。
+
+推荐做法：服务器部署目录放一个 `.env` 文件，启动容器时由 `docker-compose.prod.yml` 读取。
+
+后端会读取这些环境变量：
+
+```env
+# 优先级最高；如果配置了 MYSQL_DSN，会忽略下面拆分字段
+MYSQL_DSN=mysql+aiomysql://user:password@host:3306/stocks
+
+# 不使用 MYSQL_DSN 时使用下面这些
+MYSQL_HOST=host.docker.internal
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your-password
+MYSQL_DATABASE=stocks
+
+# 知途 API token，多个用英文逗号分隔
+ZT_API_TOKENS=token1,token2
 ```
 
-## 前置条件
+如果 MySQL 在服务器宿主机上，`MYSQL_HOST` 用：
 
-本地机器需要安装并启动 Docker。Windows 上需要先启动 Docker Desktop。
-
-服务器需要安装 Docker 和 Docker Compose 插件：
-
-```bash
-docker version
-docker compose version
+```env
+MYSQL_HOST=host.docker.internal
 ```
 
-## 本地构建镜像
+如果 MySQL 也是 Docker Compose 里的服务，`MYSQL_HOST` 用对应服务名。
+
+## 2. 本地构建镜像
 
 在项目根目录执行：
 
@@ -35,146 +41,106 @@ docker compose version
 ./docker-build.sh
 ```
 
-默认会构建两个镜像，版本号来自项目文件：
+默认构建：
 
 ```text
-后端版本：backend/pyproject.toml 的 project.version
-前端版本：frontend/package.json 的 version
+stock-calculator-backend:<backend version>
+stock-calculator-frontend:<frontend version>
 ```
 
-当前默认镜像为：
+版本号默认来自：
 
 ```text
-stock-calculator-backend:0.1.0
-stock-calculator-frontend:0.1.0
+backend/pyproject.toml
+frontend/package.json
 ```
 
-可以通过环境变量分别覆盖版本：
-
-```bash
-BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
-```
-
-也可以用 `IMAGE_TAG` 同时覆盖前后端版本：
+指定统一版本：
 
 ```bash
 IMAGE_TAG=0.1.1 ./docker-build.sh
 ```
 
-如果需要加 registry 前缀：
+指定镜像仓库前缀：
 
 ```bash
-REGISTRY=docker.example.com ./docker-build.sh
+REGISTRY=registry.example.com/stock-n IMAGE_TAG=0.1.1 ./docker-build.sh
 ```
 
-等价的手动构建命令：
-
-```bash
-docker build --platform linux/amd64 -t stock-calculator-backend:0.1.0 ./backend
-docker build --platform linux/amd64 -t stock-calculator-frontend:0.1.0 ./frontend
-```
-
-## 本地启动验证
-
-本地直接构建并启动：
+## 3. 本地验证
 
 ```bash
 docker compose up -d --build
 ```
 
-访问地址：
+访问：
 
 ```text
 前端：http://localhost
 后端：http://localhost:8000
 健康检查：http://localhost:8000/health
-API 文档：http://localhost:8000/docs
+接口文档：http://localhost:8000/docs
 ```
 
 查看日志：
 
 ```bash
 docker compose logs -f
-docker compose logs -f backend
-docker compose logs -f frontend
 ```
 
-停止本地服务：
+停止：
 
 ```bash
 docker compose down
 ```
 
-## 打包并上传到服务器
+## 4. 导出并上传镜像到服务器
 
-先构建镜像：
+先构建：
 
 ```bash
-./docker-build.sh
+IMAGE_TAG=0.1.1 ./docker-build.sh
 ```
 
-然后导出镜像 tar 包并上传服务器：
+再导出 tar 并上传：
 
 ```bash
+REMOTE_HOST=root@your-server \
+REMOTE_PATH=/opt/stock-n \
+IMAGE_TAG=0.1.1 \
 ./docker-push.sh
 ```
 
-脚本默认上传到：
+脚本会上传：
 
 ```text
-root@123.56.122.63:/usr/vic/stock-images
-```
-
-可以通过环境变量覆盖服务器和目录：
-
-```bash
-REMOTE_HOST=root@your-server REMOTE_PATH=/opt/stock-n ./docker-push.sh
-```
-
-如果构建时覆盖了版本，上传时也要保持一致：
-
-```bash
-BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
-BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-push.sh
-```
-
-上传脚本会把以下文件传到服务器：
-
-```text
-backend-<tag>.tar
-frontend-<tag>.tar
+backend-0.1.1.tar
+frontend-0.1.1.tar
 docker-compose.prod.yml
 ```
 
-## 服务器加载镜像
+默认上传目录是 `/usr/vic/stock-images`，建议按实际服务器改成 `/opt/stock-n` 或你的部署目录。
+
+## 5. 服务器启动
 
 登录服务器：
 
 ```bash
-ssh root@123.56.122.63
-cd /usr/vic/stock-images
+ssh root@your-server
+cd /opt/stock-n
 ```
 
 加载镜像：
 
 ```bash
-docker load -i backend-0.1.0.tar
-docker load -i frontend-0.1.0.tar
+docker load -i backend-0.1.1.tar
+docker load -i frontend-0.1.1.tar
 ```
 
-确认镜像存在：
+创建服务器 `.env`：
 
 ```bash
-docker images | grep stock-calculator
-```
-
-## 服务器环境变量
-
-在服务器的部署目录创建 `.env`：
-
-```bash
-cd /usr/vic/stock-images
-vi .env
+vim .env
 ```
 
 示例：
@@ -185,37 +151,82 @@ MYSQL_PORT=3306
 MYSQL_USER=root
 MYSQL_PASSWORD=your-password
 MYSQL_DATABASE=stocks
+ZT_API_TOKENS=token1,token2
 ```
 
-如果 MySQL 也运行在 Docker Compose 网络里，把 `MYSQL_HOST` 改成对应的服务名。
-
-如果 MySQL 运行在服务器宿主机上，推荐使用：
-
-```env
-MYSQL_HOST=host.docker.internal
-```
-
-`docker-compose.prod.yml` 已经配置了 `host.docker.internal:host-gateway`。
-
-## 服务器启动
-
-在服务器部署目录执行：
+启动：
 
 ```bash
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-查看状态：
+检查状态：
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+默认端口：
+
+```text
+前端：80
+后端：8000
+```
+
+如果服务器 80 端口被占用：
+
+```bash
+FRONTEND_PORT=8080 \
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
+docker compose -f docker-compose.prod.yml up -d
+```
+
+## 6. 更新部署
+
+本地重新构建并上传：
+
+```bash
+IMAGE_TAG=0.1.2 ./docker-build.sh
+
+REMOTE_HOST=root@your-server \
+REMOTE_PATH=/opt/stock-n \
+IMAGE_TAG=0.1.2 \
+./docker-push.sh
+```
+
+服务器加载并重启：
+
+```bash
+cd /opt/stock-n
+docker load -i backend-0.1.2.tar
+docker load -i frontend-0.1.2.tar
+
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.2 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.2 \
+docker compose -f docker-compose.prod.yml up -d
+```
+
+## 7. 常用命令
+
+查看服务：
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
 ```
 
-查看日志：
+看后端日志：
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f
 docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+看前端日志：
+
+```bash
 docker compose -f docker-compose.prod.yml logs -f frontend
 ```
 
@@ -225,90 +236,43 @@ docker compose -f docker-compose.prod.yml logs -f frontend
 docker compose -f docker-compose.prod.yml down
 ```
 
-## 使用自定义镜像名或 tag 启动
-
-`docker-compose.prod.yml` 默认使用：
-
-```text
-stock-calculator-backend:0.1.0
-stock-calculator-frontend:0.1.0
-```
-
-如果加载的是其他 tag，可以启动时指定：
+重启服务：
 
 ```bash
-BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
-FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml restart
 ```
 
-如果前端 80 端口被占用，可以改端口：
+## 8. 常见问题
 
-```bash
-FRONTEND_PORT=8080 docker compose -f docker-compose.prod.yml up -d
-```
+### 后端连不上 MySQL
 
-后端端口同理：
-
-```bash
-BACKEND_PORT=8001 docker compose -f docker-compose.prod.yml up -d
-```
-
-## 更新部署流程
-
-本地重新构建并上传：
-
-```bash
-BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-build.sh
-BACKEND_VERSION=0.1.1 FRONTEND_VERSION=0.1.1 ./docker-push.sh
-```
-
-服务器加载新镜像并启动：
-
-```bash
-cd /usr/vic/stock-images
-docker load -i backend-0.1.1.tar
-docker load -i frontend-0.1.1.tar
-
-BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
-FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
-docker compose -f docker-compose.prod.yml up -d
-```
-
-## 常见问题
-
-### Docker daemon 未启动
-
-如果本地构建时报错类似：
-
-```text
-failed to connect to the docker API
-```
-
-先启动 Docker Desktop 或 Docker daemon，再重新执行构建命令。
-
-### 后端健康检查失败
-
-查看后端日志：
+先看日志：
 
 ```bash
 docker compose -f docker-compose.prod.yml logs -f backend
 ```
 
-重点检查 `.env` 里的数据库连接信息是否正确。
+如果 MySQL 在宿主机，不要写 `MYSQL_HOST=localhost`。容器里的 `localhost` 是容器自身，应使用：
 
-### 前端无法访问后端
+```env
+MYSQL_HOST=host.docker.internal
+```
 
-前端容器通过 Nginx 把请求代理到后端服务名 `backend:8000`。请确认两个容器都在运行：
+### 前端打不开接口
+
+前端 Nginx 会把 API 请求代理到 Compose 网络里的 `backend:8000`。确认两个容器都健康：
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
 ```
 
-### 服务器 MySQL 连接失败
+### 想用其他 env 文件
 
-如果 MySQL 在宿主机上，不要把 `MYSQL_HOST` 写成 `localhost`。容器里的 `localhost` 指向容器自己，应使用：
+`docker-compose.prod.yml` 支持 `ENV_FILE`：
 
-```env
-MYSQL_HOST=host.docker.internal
+```bash
+ENV_FILE=/opt/stock-n/prod.env \
+BACKEND_IMAGE_REF=stock-calculator-backend:0.1.1 \
+FRONTEND_IMAGE_REF=stock-calculator-frontend:0.1.1 \
+docker compose -f docker-compose.prod.yml up -d
 ```

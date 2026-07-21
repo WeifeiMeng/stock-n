@@ -372,46 +372,6 @@ footer {
   font-size: 13px;
 }
 
-.pdf-export {
-  position: fixed;
-  left: -10000px;
-  top: 0;
-  width: 1200px;
-  padding: 24px;
-  background: #fff;
-  color: #111827;
-}
-
-.pdf-export h2 {
-  margin: 0 0 8px;
-  color: #111827;
-}
-
-.pdf-export h3 {
-  margin: 18px 0 8px;
-  color: #111827;
-  font-size: 16px;
-}
-
-.pdf-export p {
-  margin: 0 0 16px;
-  color: #4b5563;
-}
-
-.pdf-export table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 14px;
-}
-
-.pdf-export th,
-.pdf-export td {
-  border: 1px solid #d1d5db;
-  color: #111827;
-  font-size: 11px;
-  padding: 6px;
-}
-
 @media (max-width: 760px) {
   .app-shell {
     width: min(100% - 24px, 1500px);
