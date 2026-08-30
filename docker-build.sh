@@ -8,6 +8,10 @@ BACKEND_IMAGE="${BACKEND_IMAGE:-stock-calculator-backend}"
 FRONTEND_IMAGE="${FRONTEND_IMAGE:-stock-calculator-frontend}"
 BACKEND_VERSION="${BACKEND_VERSION:-$(node scripts/read-version.mjs backend)}"
 FRONTEND_VERSION="${FRONTEND_VERSION:-$(node scripts/read-version.mjs frontend)}"
+BUILD_CACHE_ARGS=()
+if [[ -n "${NO_CACHE:-}" ]]; then
+  BUILD_CACHE_ARGS=(--no-cache --pull)
+fi
 
 if [[ -n "${IMAGE_TAG:-}" ]]; then
   BACKEND_VERSION="${IMAGE_TAG}"
@@ -29,6 +33,7 @@ FRONTEND_REF="$(image_ref "${FRONTEND_IMAGE}" "${FRONTEND_VERSION}")"
 
 echo "Building backend image: ${BACKEND_REF}"
 docker build \
+  "${BUILD_CACHE_ARGS[@]}" \
   --platform "${PLATFORM}" \
   --build-arg "BASE_REGISTRY=${BASE_REGISTRY}" \
   -t "${BACKEND_REF}" \
@@ -36,6 +41,7 @@ docker build \
 
 echo "Building frontend image: ${FRONTEND_REF}"
 docker build \
+  "${BUILD_CACHE_ARGS[@]}" \
   --platform "${PLATFORM}" \
   --build-arg "BASE_REGISTRY=${BASE_REGISTRY}" \
   -t "${FRONTEND_REF}" \
