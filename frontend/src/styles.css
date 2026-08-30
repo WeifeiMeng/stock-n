@@ -71,6 +71,25 @@ button:disabled {
   opacity: 0.55;
 }
 
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link-btn:hover {
+  background: rgba(217, 54, 84, 0.08);
+}
+
 .app-shell {
   width: min(1500px, calc(100% - 32px));
   margin: 0 auto;

@@ -84,7 +84,19 @@ function withPrices(item) {
     position_triggered: Boolean(item.position_triggered),
     prices,
     warned,
+    xueqiu_url: getXueqiuUrl(item.code),
   };
+}
+
+function getXueqiuUrl(code) {
+  const normalized = String(code || '').trim();
+  if (/^6\d{5}$/.test(normalized)) {
+    return `https://xueqiu.com/S/SH${normalized}`;
+  }
+  if (/^[023]\d{5}$/.test(normalized)) {
+    return `https://xueqiu.com/S/SZ${normalized}`;
+  }
+  return '';
 }
 
 async function queryStockN() {
@@ -637,6 +649,7 @@ function arrayBufferToBase64(buffer) {
               <th class="group-3">买 3</th>
               <th class="group-3">止盈 3</th>
               <th class="group-3">止损 3</th>
+              <th>雪球</th>
             </tr>
           </thead>
           <tbody>
@@ -656,6 +669,18 @@ function arrayBufferToBase64(buffer) {
               <td class="buy group-3">{{ stock.prices.buy3.toFixed(2) }}</td>
               <td class="profit group-3">{{ stock.prices.profit3.toFixed(2) }}</td>
               <td class="loss group-3">{{ stock.prices.loss3.toFixed(2) }}</td>
+              <td>
+                <a
+                  v-if="stock.xueqiu_url"
+                  class="link-btn"
+                  :href="stock.xueqiu_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  打开
+                </a>
+                <span v-else>-</span>
+              </td>
             </tr>
           </tbody>
         </table>
