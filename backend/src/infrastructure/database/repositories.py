@@ -1,7 +1,7 @@
 """数据仓库实现 —— 替代旧 DAO 层，session 始终显式注入"""
 from __future__ import annotations
 from typing import Iterable
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.model import ZtStockInfo, DayStockInfo, StockNInfo, StockPositionInfo
@@ -152,6 +152,20 @@ class StockPositionRepository:
         return deduped
 
     @staticmethod
+    async def list_open_before_date(session: AsyncSession, trade_date: str, limit: int = 1000) -> list[StockPositionEntity]:
+        stmt = (
+            select(StockPositionEntity)
+            .where(
+                StockPositionEntity.status == "holding",
+                StockPositionEntity.trade_date < trade_date,
+            )
+            .order_by(StockPositionEntity.trade_date, StockPositionEntity.code)
+            .limit(limit)
+        )
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+    @staticmethod
     async def insert_many(session: AsyncSession, positions: Iterable[StockPositionInfo]) -> int:
         entities = [
             StockPositionEntity(
@@ -159,7 +173,11 @@ class StockPositionRepository:
                 base_price=p.base_price, highest_price=p.highest_price,
                 lowest_price=p.lowest_price, buy_price=p.buy_price,
                 buy_lots=p.buy_lots, buy_shares=p.buy_shares,
-                buy_amount=p.buy_amount, status=p.status,
+                buy_amount=p.buy_amount, buy_level=p.buy_level,
+                sell_date=p.sell_date, sell_price=p.sell_price,
+                sell_amount=p.sell_amount, profit_amount=p.profit_amount,
+                profit_rate=p.profit_rate, profit_status=p.profit_status,
+                exit_reason=p.exit_reason, status=p.status,
             )
             for p in positions
         ]
@@ -168,6 +186,29 @@ class StockPositionRepository:
         session.add_all(entities)
         await session.flush()
         return len(entities)
+
+    @staticmethod
+    async def close_position(session: AsyncSession, sold: StockPositionInfo) -> int:
+        stmt = (
+            update(StockPositionEntity)
+            .where(
+                StockPositionEntity.code == sold.code,
+                StockPositionEntity.trade_date == sold.trade_date,
+                StockPositionEntity.status == "holding",
+            )
+            .values(
+                sell_date=sold.sell_date,
+                sell_price=sold.sell_price,
+                sell_amount=sold.sell_amount,
+                profit_amount=sold.profit_amount,
+                profit_rate=sold.profit_rate,
+                profit_status=sold.profit_status,
+                exit_reason=sold.exit_reason,
+                status="closed",
+            )
+        )
+        result = await session.execute(stmt)
+        return result.rowcount
 
 
 async def init_all_tables() -> None:
@@ -183,3 +224,27 @@ async def init_all_tables() -> None:
             StockNEntity.__table__,
             StockPositionEntity.__table__,
         ])
+        await _ensure_stock_position_columns(conn)
+
+
+async def _ensure_stock_position_columns(conn) -> None:
+    dialect = conn.dialect.name
+    if dialect != "mysql":
+        return
+
+    result = await conn.exec_driver_sql("SHOW COLUMNS FROM stock_position")
+    current_columns = {row[0] for row in result}
+    missing_columns = {
+        "buy_level": "VARCHAR(8) NOT NULL DEFAULT 'B1'",
+        "sell_date": "VARCHAR(10) NOT NULL DEFAULT ''",
+        "sell_price": "FLOAT NOT NULL DEFAULT 0",
+        "sell_amount": "FLOAT NOT NULL DEFAULT 0",
+        "profit_amount": "FLOAT NOT NULL DEFAULT 0",
+        "profit_rate": "FLOAT NOT NULL DEFAULT 0",
+        "profit_status": "VARCHAR(16) NOT NULL DEFAULT ''",
+        "exit_reason": "VARCHAR(16) NOT NULL DEFAULT ''",
+    }
+    for column, definition in missing_columns.items():
+        if column in current_columns:
+            continue
+        await conn.exec_driver_sql(f"ALTER TABLE stock_position ADD COLUMN {column} {definition}")

@@ -306,6 +306,10 @@ tbody tr:hover {
   background: rgba(217, 54, 84, 0.06);
 }
 
+tbody tr.closed {
+  opacity: 0.72;
+}
+
 tbody tr.warned td:first-child,
 tbody tr.warned td:nth-child(2),
 tbody tr.warned td:nth-child(3),
@@ -317,6 +321,7 @@ tbody tr.warned td:nth-child(6) {
 
 .code,
 .buy,
+.sell,
 .profit,
 .loss {
   font-family: Consolas, Monaco, monospace;

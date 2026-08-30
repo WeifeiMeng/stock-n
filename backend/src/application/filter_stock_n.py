@@ -193,6 +193,7 @@ def build_stock_positions(stocks: list[StockNInfo]) -> list[StockPositionInfo]:
             buy_lots=plan.lots,
             buy_shares=plan.shares,
             buy_amount=plan.amount,
+            buy_level=plan.buy_level,
         ))
     return positions
 

@@ -25,6 +25,24 @@ def _day_entity_to_info(e) -> DayStockInfo:
     )
 
 
+def _position_entity_to_info(e) -> StockPositionInfo:
+    return StockPositionInfo(
+        code=e.code, name=e.name, trade_date=e.trade_date,
+        base_price=e.base_price, highest_price=e.highest_price,
+        lowest_price=e.lowest_price, buy_price=e.buy_price,
+        buy_lots=e.buy_lots, buy_shares=e.buy_shares,
+        buy_amount=e.buy_amount, buy_level=getattr(e, "buy_level", "B1") or "B1",
+        sell_date=getattr(e, "sell_date", "") or "",
+        sell_price=getattr(e, "sell_price", 0.0) or 0.0,
+        sell_amount=getattr(e, "sell_amount", 0.0) or 0.0,
+        profit_amount=getattr(e, "profit_amount", 0.0) or 0.0,
+        profit_rate=getattr(e, "profit_rate", 0.0) or 0.0,
+        profit_status=getattr(e, "profit_status", "") or "",
+        exit_reason=getattr(e, "exit_reason", "") or "",
+        status=e.status,
+    )
+
+
 def get_day_data_provider() -> DayDataProvider:
     """创建带 DB 缓存的日线数据提供器"""
     class _Provider:
@@ -155,14 +173,24 @@ def get_stock_repository() -> StockRepository:
                 return []
             async with sf() as session:
                 entities = await StockPositionRepository.list_by_trade_date(session, trade_date)
-            return [
-                StockPositionInfo(
-                    code=e.code, name=e.name, trade_date=e.trade_date,
-                    base_price=e.base_price, highest_price=e.highest_price,
-                    lowest_price=e.lowest_price, buy_price=e.buy_price,
-                    buy_lots=e.buy_lots, buy_shares=e.buy_shares,
-                    buy_amount=e.buy_amount, status=e.status,
-                )
-                for e in entities
-            ]
+            return [_position_entity_to_info(e) for e in entities]
+
+        async def get_open_stock_positions_before(self, trade_date: str):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return []
+            async with sf() as session:
+                entities = await StockPositionRepository.list_open_before_date(session, trade_date)
+            return [_position_entity_to_info(e) for e in entities]
+
+        async def close_stock_position(self, position):
+            from src.infrastructure.database.connection import get_session_factory
+            sf = get_session_factory()
+            if sf is None:
+                return 0
+            async with sf() as session:
+                count = await StockPositionRepository.close_position(session, position)
+                await session.commit()
+            return count
     return _Repo()

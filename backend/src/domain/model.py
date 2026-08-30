@@ -61,4 +61,12 @@ class StockPositionInfo:
     buy_lots: int
     buy_shares: int
     buy_amount: float
+    buy_level: str = "B1"
+    sell_date: str = ""
+    sell_price: float = 0.0
+    sell_amount: float = 0.0
+    profit_amount: float = 0.0
+    profit_rate: float = 0.0
+    profit_status: str = ""
+    exit_reason: str = ""
     status: str = "holding"

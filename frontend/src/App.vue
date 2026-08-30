@@ -129,9 +129,18 @@ async function queryPositions() {
           highest_price: Number(item.highest_price ?? 0),
           lowest_price: Number(item.lowest_price ?? 0),
           buy1_price: Number(item.buy1_price ?? 0),
+          buy_level: item.buy_level || 'B1',
           buy_lots: Number(item.buy_lots ?? 0),
           buy_shares: Number(item.buy_shares ?? 0),
           buy_amount: Number(item.buy_amount ?? 0),
+          sell_date: item.sell_date || '',
+          sell_price: Number(item.sell_price ?? 0),
+          sell_amount: Number(item.sell_amount ?? 0),
+          profit_amount: Number(item.profit_amount ?? 0),
+          profit_rate: Number(item.profit_rate ?? 0),
+          profit_status: item.profit_status || '',
+          exit_reason: item.exit_reason || '',
+          status: item.status || 'holding',
         }))
       : [];
   } catch (err) {
@@ -158,7 +167,7 @@ async function updatePositions() {
       throw new Error(detail || `HTTP ${response.status}`);
     }
     const result = await response.json();
-    positionSummary.value = `持仓更新完成：读取 ${result.source_date} 股票池 ${result.source_total} 只，写入 ${result.positions_inserted} 条持仓。`;
+    positionSummary.value = `持仓更新完成：检查历史持仓 ${result.open_positions_checked || 0} 条，卖出 ${result.positions_sold || 0} 条；读取 ${result.source_date} 股票池 ${result.source_total} 只，买入 ${result.positions_inserted} 条。`;
     await queryPositions();
   } catch (err) {
     error.value = `持仓更新失败：${err.message}`;
@@ -363,10 +372,13 @@ async function exportToPdf() {
         { label: '名称', width: 38, getValue: (stock) => stock.name },
         { label: '最高价', width: 24, getValue: (stock) => formatNumber(stock.highest_price) },
         { label: '最低价', width: 24, getValue: (stock) => formatNumber(stock.lowest_price) },
-        { label: 'B1 价格', width: 24, getValue: (stock) => formatNumber(stock.buy1_price) },
+        { label: '档位', width: 16, getValue: (stock) => stock.buy_level || 'B1' },
+        { label: '买入价格', width: 24, getValue: (stock) => formatNumber(stock.buy1_price) },
         { label: '买入手数', width: 22, getValue: (stock) => stock.buy_lots },
         { label: '买入股数', width: 24, getValue: (stock) => stock.buy_shares },
         { label: '买入金额', width: 30, getValue: (stock) => formatNumber(stock.buy_amount) },
+        { label: '卖出价', width: 22, getValue: (stock) => formatOptionalNumber(stock.sell_price) },
+        { label: '盈亏', width: 24, getValue: (stock) => formatOptionalNumber(stock.profit_amount) },
       ],
       positionStocks.value,
     );
@@ -404,6 +416,26 @@ async function exportToPdf() {
 function formatNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number.toFixed(2) : '';
+}
+
+function formatOptionalNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number !== 0 ? number.toFixed(2) : '-';
+}
+
+function formatPercent(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number !== 0 ? `${number.toFixed(2)}%` : '-';
+}
+
+function statusText(status) {
+  return status === 'closed' ? '已卖出' : '持仓中';
+}
+
+function exitReasonText(reason) {
+  if (reason === 'take_profit') return '止盈';
+  if (reason === 'stop_loss') return '止损';
+  return '-';
 }
 
 function toPdfText(value) {
@@ -533,22 +565,46 @@ function arrayBufferToBase64(buffer) {
               <th>名称</th>
               <th>最高价</th>
               <th>最低价</th>
-              <th>B1 价格</th>
+              <th>档位</th>
+              <th>买入价格</th>
               <th>买入手数</th>
               <th>买入股数</th>
               <th>买入金额</th>
+              <th>卖出日期</th>
+              <th>卖出价格</th>
+              <th>卖出金额</th>
+              <th>盈亏金额</th>
+              <th>盈亏比例</th>
+              <th>卖出原因</th>
+              <th>状态</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="stock in positionStocks" :key="`position-${stock.code}-${stock.name}`">
+            <tr
+              v-for="stock in positionStocks"
+              :key="`position-${stock.code}-${stock.name}`"
+              :class="{ closed: stock.status === 'closed' }"
+            >
               <td class="code">{{ stock.code }}</td>
               <td class="name">{{ stock.name }}</td>
               <td>{{ stock.highest_price.toFixed(2) }}</td>
               <td class="loss">{{ stock.lowest_price.toFixed(2) }}</td>
+              <td>{{ stock.buy_level || 'B1' }}</td>
               <td class="buy">{{ stock.buy1_price.toFixed(2) }}</td>
               <td>{{ stock.buy_lots }}</td>
               <td>{{ stock.buy_shares }}</td>
               <td class="amount">{{ stock.buy_amount.toFixed(2) }}</td>
+              <td>{{ stock.sell_date || '-' }}</td>
+              <td class="sell">{{ formatOptionalNumber(stock.sell_price) }}</td>
+              <td class="amount">{{ formatOptionalNumber(stock.sell_amount) }}</td>
+              <td :class="stock.profit_amount >= 0 ? 'profit' : 'loss'">
+                {{ formatOptionalNumber(stock.profit_amount) }}
+              </td>
+              <td :class="stock.profit_amount >= 0 ? 'profit' : 'loss'">
+                {{ formatPercent(stock.profit_rate) }}
+              </td>
+              <td>{{ exitReasonText(stock.exit_reason) }}</td>
+              <td>{{ statusText(stock.status) }}</td>
             </tr>
           </tbody>
         </table>

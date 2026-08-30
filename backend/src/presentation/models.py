@@ -23,6 +23,8 @@ class PositionUpdateResponse(BaseModel):
     source_date: str
     source_total: int
     positions_inserted: int
+    positions_sold: int = 0
+    open_positions_checked: int = 0
 
 
 class PositionItem(BaseModel):
@@ -33,9 +35,17 @@ class PositionItem(BaseModel):
     highest_price: float
     lowest_price: float
     buy1_price: float
+    buy_level: str = "B1"
     buy_lots: int
     buy_shares: int
     buy_amount: float
+    sell_date: str = ""
+    sell_price: float = 0.0
+    sell_amount: float = 0.0
+    profit_amount: float = 0.0
+    profit_rate: float = 0.0
+    profit_status: str = ""
+    exit_reason: str = ""
     status: str
 
 

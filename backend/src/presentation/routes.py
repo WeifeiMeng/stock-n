@@ -117,6 +117,8 @@ async def update_stock_positions(date: str) -> PositionUpdateResponse:
             source_date=result.source_date,
             source_total=result.source_total,
             positions_inserted=result.positions_inserted,
+            positions_sold=result.positions_sold,
+            open_positions_checked=result.open_positions_checked,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -135,9 +137,17 @@ async def get_stock_positions(date: str) -> list[PositionItem]:
                 highest_price=p.highest_price,
                 lowest_price=p.lowest_price,
                 buy1_price=p.buy_price,
+                buy_level=p.buy_level,
                 buy_lots=p.buy_lots,
                 buy_shares=p.buy_shares,
                 buy_amount=p.buy_amount,
+                sell_date=p.sell_date,
+                sell_price=p.sell_price,
+                sell_amount=p.sell_amount,
+                profit_amount=p.profit_amount,
+                profit_rate=p.profit_rate,
+                profit_status=p.profit_status,
+                exit_reason=p.exit_reason,
                 status=p.status,
             )
             for p in positions
